@@ -1,40 +1,247 @@
 """Sizon public API assembled from clean domain packages."""
-from .data.data import DataFeed,DataQualityReport
-from .core.expression import Primitive,Binary,Series,Constant,example_genome,primitive_registry,ALL_PRIMITIVES
-from .simulation.execution import ExecutionModel,DEFAULT_EXECUTION
-from .simulation.backtest import run_backtest,fitness
+
+from .data.data import DataFeed, DataQualityReport
+from .core.expression import (
+    Primitive,
+    Binary,
+    Series,
+    Constant,
+    example_genome,
+    primitive_registry,
+    ALL_PRIMITIVES,
+)
+from .simulation.execution import ExecutionModel, DEFAULT_EXECUTION
+from .simulation.backtest import run_backtest, fitness
 from .research.evolution import Engine
-from .core.strategy import StrategyRecord,genome_to_dict,genome_from_dict,expression,strategy_id
+from .core.strategy import (
+    StrategyRecord,
+    genome_to_dict,
+    genome_from_dict,
+    expression,
+    strategy_id,
+)
 from .platform.experiments import ExperimentStore
-from .research.validation import walk_forward,purged_cross_validation
-from .research.robustness import robustness_suite,cost_sensitivity,parameter_sensitivity,monte_carlo_returns
-from .core.types import ValueType,TypedNode,infer_type,validate_expression,signal,position
-from .core.typecheck import PrimitiveSpec,SPECS,validate_strict
-from .simulation.portfolio import PortfolioConfig,Order,PortfolioState,execute_order,apply_risk_limits,liquidation_check
-from .simulation.accounting import PortfolioLedger,LedgerEntry,optimize_cross_sectional
-from .simulation.orderbook import BookLevel,OrderBookSnapshot,ImpactCurve,Fill,simulate_limit_fill,execute_market
-from .simulation.venues import VenueRules,CalibrationRecord
-from .simulation.replay import MarketEvent,ReplayResult,OrderBookReplay
-from .data.pit import PointInTimeDataset,CorporateAction,FuturesRoll,ConnectorRegistry
-from .data.connectors import VendorConfig,DatasetLineage,MarketDataConnector,ConnectorRegistry as VendorConnectorRegistry
-from .data.universe import Membership,SurvivorshipSafeUniverse
-from .research.statistics import bootstrap_mean,deflated_sharpe_ratio,probability_of_backtest_overfitting,multiple_testing_adjust,white_reality_check,spa_test,regime_labels
-from .research.search import pareto_front,dominates,structural_crossover,bloat_penalty,diversity_score,save_checkpoint,load_checkpoint
+from .research.validation import walk_forward, purged_cross_validation
+from .research.robustness import (
+    robustness_suite,
+    cost_sensitivity,
+    parameter_sensitivity,
+    monte_carlo_returns,
+)
+from .core.types import (
+    ValueType,
+    TypedNode,
+    infer_type,
+    validate_expression,
+    signal,
+    position,
+)
+from .core.typecheck import PrimitiveSpec, SPECS, validate_strict
+from .simulation.portfolio import (
+    PortfolioConfig,
+    Order,
+    PortfolioState,
+    execute_order,
+    apply_risk_limits,
+    liquidation_check,
+)
+from .simulation.accounting import (
+    PortfolioLedger,
+    LedgerEntry,
+    optimize_cross_sectional,
+)
+from .simulation.orderbook import (
+    BookLevel,
+    OrderBookSnapshot,
+    ImpactCurve,
+    Fill,
+    simulate_limit_fill,
+    execute_market,
+)
+from .simulation.venues import VenueRules, CalibrationRecord
+from .simulation.replay import MarketEvent, ReplayResult, OrderBookReplay
+from .data.pit import (
+    PointInTimeDataset,
+    CorporateAction,
+    FuturesRoll,
+    ConnectorRegistry,
+)
+from .data.connectors import (
+    VendorConfig,
+    DatasetLineage,
+    MarketDataConnector,
+    ConnectorRegistry as VendorConnectorRegistry,
+)
+from .data.universe import Membership, SurvivorshipSafeUniverse
+from .research.statistics import (
+    bootstrap_mean,
+    deflated_sharpe_ratio,
+    probability_of_backtest_overfitting,
+    multiple_testing_adjust,
+    white_reality_check,
+    spa_test,
+    regime_labels,
+)
+from .research.search import (
+    pareto_front,
+    dominates,
+    structural_crossover,
+    bloat_penalty,
+    diversity_score,
+    save_checkpoint,
+    load_checkpoint,
+)
 from .research.nsga2 import NSGA2
-from .research.genealogy import Genealogy,GenealogyEvent,population_analytics
-from .research.comparison import robustness_score,compare
+from .research.genealogy import Genealogy, GenealogyEvent, population_analytics
+from .research.comparison import robustness_score, compare
 from .platform.query import ExperimentQuery
-from .platform.report import build_report,build_top_report
+from .platform.report import build_report, build_top_report
 from .platform.duckdb_query import ExperimentDatabase
-from .platform.export import export_json,export_yaml,export_python,notebook_template
-from .platform.plugins import PluginRegistry,PaperBroker,PaperOrder
-from .platform.production import SafetyConfig,HealthMonitor,DeploymentGate,read_secret
-from .platform.deployment import ShadowMode,KillSwitch,SimulatedBroker,BrokerAdapter
-from .platform.brokers import BrokerConfig,BrokerState,HttpBrokerAdapter,Reconciler
-from .platform.security import SecretStore,AuditLog,Incident,IncidentManager
-from .platform.alerts import Alert,AlertSink,LogSink,WebhookSink,AlertRouter
-from .platform.soak import SoakResult,SoakRunner
-from .platform.runbook import ReadinessChecklist,ApprovalRecord
-from .research.reference_validation import ReferenceCase,validate_cases,fixture_constant_returns
+from .platform.export import export_json, export_yaml, export_python, notebook_template
+from .platform.plugins import PluginRegistry, PaperBroker, PaperOrder
+from .platform.production import (
+    SafetyConfig,
+    HealthMonitor,
+    DeploymentGate,
+    read_secret,
+)
+from .platform.deployment import ShadowMode, KillSwitch, SimulatedBroker, BrokerAdapter
+from .platform.brokers import BrokerConfig, BrokerState, HttpBrokerAdapter, Reconciler
+from .platform.security import SecretStore, AuditLog, Incident, IncidentManager
+from .platform.alerts import Alert, AlertSink, LogSink, WebhookSink, AlertRouter
+from .platform.soak import SoakResult, SoakRunner
+from .platform.runbook import ReadinessChecklist, ApprovalRecord
+from .research.reference_validation import (
+    ReferenceCase,
+    validate_cases,
+    fixture_constant_returns,
+)
 from .platform.studio_server import serve
-__all__=["DataFeed","DataQualityReport","Primitive","Binary","Series","Constant","example_genome","primitive_registry","ALL_PRIMITIVES","ExecutionModel","DEFAULT_EXECUTION","run_backtest","fitness","Engine","StrategyRecord","genome_to_dict","genome_from_dict","expression","strategy_id","ExperimentStore","walk_forward","purged_cross_validation","robustness_suite","cost_sensitivity","parameter_sensitivity","monte_carlo_returns","ValueType","TypedNode","infer_type","validate_expression","signal","position","PrimitiveSpec","SPECS","validate_strict","PortfolioConfig","Order","PortfolioState","execute_order","apply_risk_limits","liquidation_check","PortfolioLedger","LedgerEntry","optimize_cross_sectional","BookLevel","OrderBookSnapshot","ImpactCurve","Fill","simulate_limit_fill","execute_market","VenueRules","CalibrationRecord","MarketEvent","ReplayResult","OrderBookReplay","PointInTimeDataset","CorporateAction","FuturesRoll","ConnectorRegistry","VendorConfig","DatasetLineage","MarketDataConnector","VendorConnectorRegistry","Membership","SurvivorshipSafeUniverse","bootstrap_mean","deflated_sharpe_ratio","probability_of_backtest_overfitting","multiple_testing_adjust","white_reality_check","spa_test","regime_labels","pareto_front","dominates","structural_crossover","bloat_penalty","diversity_score","save_checkpoint","load_checkpoint","NSGA2","Genealogy","GenealogyEvent","population_analytics","robustness_score","compare","ExperimentQuery","ExperimentDatabase","build_report","build_top_report","export_json","export_yaml","export_python","notebook_template","PluginRegistry","PaperBroker","PaperOrder","SafetyConfig","HealthMonitor","DeploymentGate","read_secret","ShadowMode","KillSwitch","SimulatedBroker","BrokerAdapter","BrokerConfig","BrokerState","HttpBrokerAdapter","Reconciler","SecretStore","AuditLog","Incident","IncidentManager","Alert","AlertSink","LogSink","WebhookSink","AlertRouter","SoakResult","SoakRunner","ReadinessChecklist","ApprovalRecord","ReferenceCase","validate_cases","fixture_constant_returns","serve"]
+
+__all__ = [
+    "DataFeed",
+    "DataQualityReport",
+    "Primitive",
+    "Binary",
+    "Series",
+    "Constant",
+    "example_genome",
+    "primitive_registry",
+    "ALL_PRIMITIVES",
+    "ExecutionModel",
+    "DEFAULT_EXECUTION",
+    "run_backtest",
+    "fitness",
+    "Engine",
+    "StrategyRecord",
+    "genome_to_dict",
+    "genome_from_dict",
+    "expression",
+    "strategy_id",
+    "ExperimentStore",
+    "walk_forward",
+    "purged_cross_validation",
+    "robustness_suite",
+    "cost_sensitivity",
+    "parameter_sensitivity",
+    "monte_carlo_returns",
+    "ValueType",
+    "TypedNode",
+    "infer_type",
+    "validate_expression",
+    "signal",
+    "position",
+    "PrimitiveSpec",
+    "SPECS",
+    "validate_strict",
+    "PortfolioConfig",
+    "Order",
+    "PortfolioState",
+    "execute_order",
+    "apply_risk_limits",
+    "liquidation_check",
+    "PortfolioLedger",
+    "LedgerEntry",
+    "optimize_cross_sectional",
+    "BookLevel",
+    "OrderBookSnapshot",
+    "ImpactCurve",
+    "Fill",
+    "simulate_limit_fill",
+    "execute_market",
+    "VenueRules",
+    "CalibrationRecord",
+    "MarketEvent",
+    "ReplayResult",
+    "OrderBookReplay",
+    "PointInTimeDataset",
+    "CorporateAction",
+    "FuturesRoll",
+    "ConnectorRegistry",
+    "VendorConfig",
+    "DatasetLineage",
+    "MarketDataConnector",
+    "VendorConnectorRegistry",
+    "Membership",
+    "SurvivorshipSafeUniverse",
+    "bootstrap_mean",
+    "deflated_sharpe_ratio",
+    "probability_of_backtest_overfitting",
+    "multiple_testing_adjust",
+    "white_reality_check",
+    "spa_test",
+    "regime_labels",
+    "pareto_front",
+    "dominates",
+    "structural_crossover",
+    "bloat_penalty",
+    "diversity_score",
+    "save_checkpoint",
+    "load_checkpoint",
+    "NSGA2",
+    "Genealogy",
+    "GenealogyEvent",
+    "population_analytics",
+    "robustness_score",
+    "compare",
+    "ExperimentQuery",
+    "ExperimentDatabase",
+    "build_report",
+    "build_top_report",
+    "export_json",
+    "export_yaml",
+    "export_python",
+    "notebook_template",
+    "PluginRegistry",
+    "PaperBroker",
+    "PaperOrder",
+    "SafetyConfig",
+    "HealthMonitor",
+    "DeploymentGate",
+    "read_secret",
+    "ShadowMode",
+    "KillSwitch",
+    "SimulatedBroker",
+    "BrokerAdapter",
+    "BrokerConfig",
+    "BrokerState",
+    "HttpBrokerAdapter",
+    "Reconciler",
+    "SecretStore",
+    "AuditLog",
+    "Incident",
+    "IncidentManager",
+    "Alert",
+    "AlertSink",
+    "LogSink",
+    "WebhookSink",
+    "AlertRouter",
+    "SoakResult",
+    "SoakRunner",
+    "ReadinessChecklist",
+    "ApprovalRecord",
+    "ReferenceCase",
+    "validate_cases",
+    "fixture_constant_returns",
+    "serve",
+]
