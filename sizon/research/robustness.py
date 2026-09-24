@@ -1,7 +1,8 @@
 """Repeatable robustness tests for each discovered strategy."""
 
 from __future__ import annotations
-import math, random
+import math
+import random
 from dataclasses import replace
 from sizon.simulation.backtest import run_backtest
 from sizon.data.data import DataFeed

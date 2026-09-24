@@ -1,7 +1,8 @@
 """Human-readable run reporting."""
 
 from __future__ import annotations
-import json, html
+import json
+import html
 from pathlib import Path
 from sizon.research.comparison import compare
 

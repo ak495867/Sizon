@@ -4,7 +4,7 @@ from __future__ import annotations
 
 
 def robustness_score(record):
-    test = record.get("test_metrics", {})
+    record.get("test_metrics", {})
     robust = record.get("robustness", {})
     cost = robust.get("cost_sensitivity", {}).get("scenarios", [])
     param = robust.get("parameter_sensitivity", {}).get("scenarios", [])

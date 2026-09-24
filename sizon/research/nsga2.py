@@ -1,7 +1,7 @@
 """Small deterministic NSGA-II implementation for strategy score dictionaries."""
 
 from __future__ import annotations
-import json, random
+import json
 from pathlib import Path
 from sizon.core.strategy import genome_to_dict, genome_from_dict
 

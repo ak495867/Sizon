@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-import json, urllib.request
+import json
+import urllib.request
 
 
 @dataclass(frozen=True)

@@ -1,5 +1,7 @@
 from pathlib import Path
-import csv, math, json
+import csv
+import math
+import json
 import sizon
 
 base = Path("/home/ubuntu/sizon")

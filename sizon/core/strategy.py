@@ -1,9 +1,10 @@
 """Portable genome serialization and complete strategy research records."""
 
 from __future__ import annotations
-import hashlib, json
+import hashlib
+import json
 from dataclasses import asdict, dataclass
-from sizon.core.expression import Node, Series, Constant, Primitive, Binary
+from sizon.core.expression import Series, Constant, Primitive, Binary
 
 
 def genome_to_dict(node):

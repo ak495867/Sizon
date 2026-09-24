@@ -1,7 +1,8 @@
 """Dependency-light statistical diagnostics for research claims."""
 
 from __future__ import annotations
-import math, random
+import math
+import random
 
 
 def bootstrap_mean(values, simulations=1000, seed=7):

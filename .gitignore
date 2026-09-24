@@ -1,2 +1,3 @@
 *.pyc
 rebuild_top_report.py
+.ruff_cache/*

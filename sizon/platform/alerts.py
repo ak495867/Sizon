@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-import json, logging, urllib.request
+import json
+import logging
+import urllib.request
 
 
 @dataclass

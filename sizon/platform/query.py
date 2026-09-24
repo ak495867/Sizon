@@ -1,8 +1,8 @@
 """Optional SQLite index for searching thousands of persisted strategies."""
 
 from __future__ import annotations
-import json, sqlite3
-from pathlib import Path
+import json
+import sqlite3
 
 
 class ExperimentQuery:

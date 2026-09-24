@@ -1,5 +1,6 @@
 from __future__ import annotations
-import argparse, json
+import argparse
+import json
 from sizon.data.data import DataFeed
 from sizon.research.evolution import Engine
 

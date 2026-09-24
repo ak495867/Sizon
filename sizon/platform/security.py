@@ -3,7 +3,9 @@
 from __future__ import annotations
 from dataclasses import dataclass, asdict
 from hashlib import sha256
-import json, os, time
+import json
+import os
+import time
 
 
 class SecretStore:

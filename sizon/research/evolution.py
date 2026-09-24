@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import random
 from sizon.simulation.backtest import fitness, run_backtest
 from sizon.data.data import DataFeed
-from sizon.simulation.execution import ExecutionModel, DEFAULT_EXECUTION
+from sizon.simulation.execution import DEFAULT_EXECUTION
 from sizon.core.expression import Node, Primitive, Binary, example_genome
 from sizon.platform.experiments import ExperimentStore
 from sizon.research.robustness import robustness_suite

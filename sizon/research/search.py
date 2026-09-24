@@ -1,9 +1,10 @@
 """Search utilities for multi-objective evolutionary research."""
 
 from __future__ import annotations
-import json, random
+import json
+import random
 from pathlib import Path
-from sizon.core.expression import Node, Binary, Primitive
+from sizon.core.expression import Node, Binary
 
 
 def dominates(a, b):
