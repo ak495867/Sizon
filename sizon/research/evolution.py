@@ -3,6 +3,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 import random
+import concurrent.futures
 from sizon.simulation.backtest import fitness, run_backtest
 from sizon.data.data import DataFeed
 from sizon.simulation.execution import DEFAULT_EXECUTION
@@ -12,6 +13,7 @@ from sizon.research.robustness import robustness_suite
 from sizon.core.strategy import StrategyRecord, genome_to_dict, expression, strategy_id
 from sizon.research.validation import walk_forward, purged_cross_validation
 from sizon.research.nsga2 import NSGA2, save_checkpoint, load_checkpoint
+from sizon.research.search import structural_crossover, bloat_penalty
 
 
 @dataclass
@@ -32,12 +34,20 @@ class Engine:
         execution=None,
         robustness_simulations=30,
         resume_from=None,
+        crossover_rate=0.7,
+        mutation_rate=0.3,
+        max_complexity=25,
+        workers=1,
     ):
         self.feed, self.population, self.generations = feed, population, generations
         self.seed = seed
         self.rng = random.Random(seed)
         self.execution = execution or DEFAULT_EXECUTION
         self.robustness_simulations = robustness_simulations
+        self.crossover_rate = crossover_rate
+        self.mutation_rate = mutation_rate
+        self.max_complexity = max_complexity
+        self.workers = workers
         self.store = ExperimentStore(output_dir, run_id)
         self.train, self.test = feed.split()
         self.nsga = NSGA2()
@@ -66,7 +76,7 @@ class Engine:
     def _evaluate_and_save(self, generation, index, genome):
         train_result = run_backtest(self.train, genome, self.execution)
         test_result = run_backtest(self.test, genome, self.execution)
-        complexity = genome.complexity()
+        complexity = genome.complexity() + bloat_penalty(genome, self.max_complexity)
         validation = {
             "walk_forward": walk_forward(
                 self.feed, genome, n_splits=3, test_size=0.2, execution=self.execution
@@ -123,10 +133,20 @@ class Engine:
         saved = 0
         pareto_sizes = []
         for generation in range(self.start_generation, self.generations):
-            candidates = [
-                self._evaluate_and_save(generation, i, g)
-                for i, g in enumerate(population)
-            ]
+            if self.workers > 1:
+                def _eval_worker(pair):
+                    idx, g = pair
+                    return self._evaluate_and_save(generation, idx, g)
+
+                with concurrent.futures.ThreadPoolExecutor(
+                    max_workers=self.workers
+                ) as pool:
+                    candidates = list(pool.map(_eval_worker, enumerate(population)))
+            else:
+                candidates = [
+                    self._evaluate_and_save(generation, i, g)
+                    for i, g in enumerate(population)
+                ]
             saved += len(candidates)
             candidates.sort(
                 key=lambda c: (
@@ -149,10 +169,20 @@ class Engine:
                 c.genome
                 for c in self.nsga.select(candidates, max(1, self.population // 4))
             ]
-            population = elites + [
-                self._mutate(self.rng.choice(elites))
-                for _ in range(self.population - len(elites))
-            ]
+            next_pop = list(elites)
+            while len(next_pop) < self.population:
+                if len(elites) >= 2 and self.rng.random() < self.crossover_rate:
+                    p1 = self.rng.choice(elites)
+                    p2 = self.rng.choice(elites)
+                    child = structural_crossover(p1, p2, self.rng)
+                    if self.rng.random() < self.mutation_rate:
+                        child = self._mutate(child)
+                else:
+                    child = self._mutate(self.rng.choice(elites))
+                if child.complexity() > self.max_complexity:
+                    child = self.rng.choice(elites)
+                next_pop.append(child)
+            population = next_pop
         self.store.finalize(
             {
                 "strategies_saved": saved,

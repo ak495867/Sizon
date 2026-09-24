@@ -11,7 +11,7 @@ from .core.expression import (
     ALL_PRIMITIVES,
 )
 from .simulation.execution import ExecutionModel, DEFAULT_EXECUTION
-from .simulation.backtest import run_backtest, fitness
+from .simulation.backtest import run_backtest, fitness, run_cross_sectional_backtest
 from .research.evolution import Engine
 from .core.strategy import (
     StrategyRecord,
@@ -57,6 +57,8 @@ from .simulation.orderbook import (
     Fill,
     simulate_limit_fill,
     execute_market,
+    stress_test_microstructure,
+    microstructure_gauntlet,
 )
 from .simulation.venues import VenueRules, CalibrationRecord
 from .simulation.replay import MarketEvent, ReplayResult, OrderBookReplay
@@ -131,6 +133,7 @@ __all__ = [
     "ExecutionModel",
     "DEFAULT_EXECUTION",
     "run_backtest",
+    "run_cross_sectional_backtest",
     "fitness",
     "Engine",
     "StrategyRecord",
@@ -169,6 +172,8 @@ __all__ = [
     "Fill",
     "simulate_limit_fill",
     "execute_market",
+    "stress_test_microstructure",
+    "microstructure_gauntlet",
     "VenueRules",
     "CalibrationRecord",
     "MarketEvent",

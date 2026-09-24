@@ -95,3 +95,93 @@ def run_backtest(
 
 def fitness(result: BacktestResult, complexity: int):
     return {**result.metrics(), "complexity": float(complexity)}
+
+
+def run_cross_sectional_backtest(
+    feeds: dict[str, DataFeed] | list[DataFeed] | DataFeed,
+    genome: Node,
+    execution: ExecutionModel | None = None,
+    max_gross: float = 1.0,
+    max_position: float = 0.2,
+) -> BacktestResult:
+    execution = execution or DEFAULT_EXECUTION
+    if isinstance(feeds, DataFeed):
+        symbols = sorted({r["symbol"] for r in feeds.rows})
+        if len(symbols) <= 1:
+            return run_backtest(feeds, genome, execution)
+        symbol_rows: dict[str, list[dict]] = {s: [] for s in symbols}
+        for r in feeds.rows:
+            symbol_rows[r["symbol"]].append(r)
+        feed_dict = {
+            s: DataFeed(rows, feeds.source, feeds.timezone)
+            for s, rows in symbol_rows.items()
+        }
+    elif isinstance(feeds, (list, tuple)):
+        feed_dict = {f.rows[0]["symbol"]: f for f in feeds}
+    else:
+        feed_dict = feeds
+
+    symbols = sorted(feed_dict.keys())
+    signals = {}
+    closes = {}
+    for s in symbols:
+        f = feed_dict[s]
+        closes[s] = f.column("close")
+        sig = genome.evaluate(
+            Context({k: f.column(k) for k in ("close", "high", "low", "volume")})
+        )
+        signals[s] = sig
+
+    n_bars = min(len(closes[s]) for s in symbols)
+    delay = max(1, execution.delay_bars)
+    returns = [0.0]
+    total_trades = 0
+    total_costs = 0.0
+    prev_weights = {s: 0.0 for s in symbols}
+
+    for i in range(1, n_bars):
+        if i >= delay:
+            raw_scores = {
+                s: (0.0 if math.isnan(signals[s][i - delay]) else signals[s][i - delay])
+                for s in symbols
+            }
+            mean_score = sum(raw_scores.values()) / max(1, len(symbols))
+            demeaned = {s: raw_scores[s] - mean_score for s in symbols}
+            pos_sum = sum(max(0.0, v) for v in demeaned.values()) or 1.0
+            neg_sum = sum(abs(min(0.0, v)) for v in demeaned.values()) or 1.0
+            target_weights = {}
+            for s in symbols:
+                val = demeaned[s]
+                if val > 0:
+                    w = min(max_position, (val / pos_sum) * (0.5 * max_gross))
+                elif val < 0:
+                    w = max(-max_position, (val / neg_sum) * (0.5 * max_gross))
+                else:
+                    w = 0.0
+                target_weights[s] = w
+        else:
+            target_weights = {s: 0.0 for s in symbols}
+
+        bar_gross = 0.0
+        bar_cost = 0.0
+        for s in symbols:
+            turnover = abs(target_weights[s] - prev_weights[s])
+            if turnover > 1e-6:
+                total_trades += 1
+            pos_dir = 1 if target_weights[s] > 0 else (-1 if target_weights[s] < 0 else 0)
+            cost = execution.cost_rate(turnover, pos_dir)
+            bar_cost += cost
+            p_prev = closes[s][i - 1]
+            p_curr = closes[s][i]
+            ret = (p_curr / p_prev - 1) if p_prev > 0 else 0.0
+            bar_gross += prev_weights[s] * ret
+
+        total_costs += bar_cost
+        returns.append(bar_gross - bar_cost)
+        prev_weights = target_weights
+
+    equity = [1.0]
+    for value in returns[1:]:
+        equity.append(equity[-1] * (1 + value))
+    dummy_positions = [1 if r > 0 else 0 for r in returns]
+    return BacktestResult(equity, returns, dummy_positions, total_trades, total_costs)
