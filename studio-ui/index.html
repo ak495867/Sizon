@@ -1,1 +1,183 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sizon Studio</title><style>body{margin:0;background:#0b1020;color:#e8eefc;font:15px system-ui}main{max-width:1100px;margin:auto;padding:32px}header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:#141c32;border:1px solid #283653;border-radius:14px;padding:18px}.metric{font-size:28px;font-weight:700}.muted{color:#92a2c4}table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #283653;text-align:left}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style></head><body><main><header><div><h1>Sizon Studio</h1><div class="muted">Research, robustness, and deployment readiness</div></div><button onclick="refresh()">Refresh</button></header><section class="grid"><div class="card"><div class="muted">Service health</div><div id="health" class="metric">Loading</div></div><div class="card"><div class="muted">Live orders</div><div class="metric">Disabled</div></div><div class="card"><div class="muted">Deployment</div><div id="deploy" class="metric">Fail-closed</div></div></section><section class="card" style="margin-top:16px"><h2>Research runs</h2><table><thead><tr><th>Run</th><th>Strategies</th><th>Report</th></tr></thead><tbody id="runs"><tr><td colspan="3" class="muted">Connect Studio API to populate runs.</td></tr></tbody></table></section></main><script>async function refresh(){try{const r=await fetch('/health');const d=await r.json();document.querySelector('#health').textContent=d.ok?'Healthy':'Alert';}catch(e){document.querySelector('#health').textContent='Offline';}try{const res=await fetch('/api/runs');if(res.ok){const runs=await res.json();const tbody=document.querySelector('#runs');if(runs.length>0){tbody.innerHTML=runs.map(r=>`<tr><td><strong>${r.run_id}</strong></td><td>${r.strategies_saved} evaluated</td><td>${r.has_report?`<a href="${r.report_url}" target="_blank" style="color:#60a5fa;text-decoration:none">View Report &rarr;</a>`:'<span class="muted">Generating...</span>'}</td></tr>`).join('');}else{tbody.innerHTML='<tr><td colspan="3" class="muted">No research runs found.</td></tr>';}}}catch(e){console.error(e);}}refresh()</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sizon Studio</title>
+  <style>
+    body { margin: 0; background: #0b1020; color: #e8eefc; font: 15px system-ui, -apple-system, sans-serif; }
+    main { max-width: 1100px; margin: auto; padding: 32px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { background: #141c32; border: 1px solid #283653; border-radius: 14px; padding: 20px; box-sizing: border-box; }
+    .metric { font-size: 28px; font-weight: 700; margin-top: 6px; }
+    .muted { color: #92a2c4; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    td, th { padding: 12px; border-bottom: 1px solid #283653; text-align: left; }
+    tr.clickable { cursor: pointer; transition: background 0.15s; }
+    tr.clickable:hover { background: #1d2847; }
+    button { background: #3b82f6; color: white; border: none; border-radius: 8px; padding: 8px 16px; font-weight: 600; cursor: pointer; }
+    button:hover { background: #2563eb; }
+    svg { width: 100%; height: auto; display: block; overflow: visible; }
+    .chart-container { background: #0e1529; border: 1px solid #1f2c4a; border-radius: 10px; padding: 16px; margin-top: 12px; }
+    @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1 style="margin:0 0 4px 0">Sizon Studio</h1>
+      <div class="muted">Autonomous Alpha Research, Robustness, & Microstructure Telemetry</div>
+    </div>
+    <button onclick="refresh()">Refresh Runs</button>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <div class="muted">Service Health</div>
+      <div id="health" class="metric">Loading...</div>
+    </div>
+    <div class="card">
+      <div class="muted">Live Deployment Gate</div>
+      <div id="deploy" class="metric" style="color:#10b981">Fail-Closed</div>
+    </div>
+    <div class="card">
+      <div class="muted">Execution Guardrails</div>
+      <div class="metric" style="color:#60a5fa">Audit Chained</div>
+    </div>
+  </section>
+
+  <!-- Interactive SVG Pareto Frontier -->
+  <section class="card" style="margin-top: 20px">
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <div>
+        <h2 style="margin:0 0 4px 0">Pareto Frontier Scatter Plot</h2>
+        <div class="muted" id="chart-subtitle">Select a run below to render Sharpe vs. Drawdown trade-offs</div>
+      </div>
+    </div>
+    <div class="chart-container" id="pareto-chart-box">
+      <svg id="pareto-svg" viewBox="0 0 700 280">
+        <text x="350" y="145" text-anchor="middle" fill="#64748b" font-size="14">No run selected. Click on an experiment run in the table below.</text>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Runs Table -->
+  <section class="card" style="margin-top: 20px">
+    <h2 style="margin:0 0 12px 0">Research Runs & Telemetry</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Run ID</th>
+          <th>Saved Candidates</th>
+          <th>Best Train Sharpe</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="runs">
+        <tr><td colspan="4" class="muted">Loading experiments...</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+async function refresh() {
+  try {
+    const r = await fetch('/health');
+    const d = await r.json();
+    document.querySelector('#health').textContent = d.ok ? 'Healthy' : 'Alert';
+    document.querySelector('#health').style.color = d.ok ? '#10b981' : '#ef4444';
+  } catch (e) {
+    document.querySelector('#health').textContent = 'Offline';
+    document.querySelector('#health').style.color = '#ef4444';
+  }
+
+  try {
+    const res = await fetch('/api/runs');
+    if (res.ok) {
+      const runs = await res.json();
+      const tbody = document.querySelector('#runs');
+      if (runs.length > 0) {
+        tbody.innerHTML = runs.map(r => `
+          <tr class="clickable" onclick="loadPareto('${r.run_id}')">
+            <td><strong>${r.run_id}</strong></td>
+            <td>${r.strategies_saved} evaluated</td>
+            <td style="color:#10b981">${(r.best_train_metrics && r.best_train_metrics.sharpe) ? r.best_train_metrics.sharpe.toFixed(3) : '0.000'}</td>
+            <td>
+              <a href="${r.report_url || '#'}" target="_blank" style="color:#60a5fa; text-decoration:none; margin-right:12px" onclick="event.stopPropagation()">Report &rarr;</a>
+              <span style="color:#a78bfa; font-size:13px">&bull; View Pareto</span>
+            </td>
+          </tr>
+        `).join('');
+        // Automatically load first run
+        loadPareto(runs[0].run_id);
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4" class="muted">No research runs found. Run an experiment using Engine.run().</td></tr>';
+      }
+    }
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+async function loadPareto(runId) {
+  document.querySelector('#chart-subtitle').textContent = `Displaying candidates for run: ${runId}`;
+  try {
+    const res = await fetch(`/api/runs/${runId}/pareto`);
+    if (!res.ok) return;
+    const candidates = await res.json();
+    renderParetoSVG(candidates, runId);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderParetoSVG(candidates, runId) {
+  const svg = document.querySelector('#pareto-svg');
+  if (!candidates || candidates.length === 0) {
+    svg.innerHTML = `<text x="350" y="145" text-anchor="middle" fill="#64748b" font-size="14">No candidate records found in ${runId}.</text>`;
+    return;
+  }
+
+  const w = 700, h = 280, padL = 60, padR = 40, padT = 30, padB = 45;
+  const sharpes = candidates.map(c => c.sharpe);
+  const dds = candidates.map(c => c.drawdown);
+
+  let minS = Math.min(0, ...sharpes), maxS = Math.max(1.0, ...sharpes);
+  let minD = 0, maxD = Math.max(0.1, ...dds);
+
+  const scaleX = d => padL + ((d - minD) / (maxD - minD || 1)) * (w - padL - padR);
+  const scaleY = s => h - padB - ((s - minS) / (maxS - minS || 1)) * (h - padT - padB);
+
+  let dots = candidates.map(c => {
+    const cx = scaleX(c.drawdown);
+    const cy = scaleY(c.sharpe);
+    const color = c.sharpe > 0 ? '#38bdf8' : '#f87171';
+    return `<circle cx="${cx}" cy="${cy}" r="4.5" fill="${color}" fill-opacity="0.8" stroke="#ffffff" stroke-width="0.8">
+      <title>${c.expression}\nSharpe: ${c.sharpe.toFixed(3)}\nDrawdown: ${(c.drawdown*100).toFixed(1)}%\nComplexity: ${c.complexity}</title>
+    </circle>`;
+  }).join('');
+
+  svg.innerHTML = `
+    <!-- Axes lines -->
+    <line x1="${padL}" y1="${h - padB}" x2="${w - padR}" y2="${h - padB}" stroke="#334155" stroke-width="1.5" />
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${h - padB}" stroke="#334155" stroke-width="1.5" />
+
+    <!-- Labels -->
+    <text x="${padL}" y="${padT - 10}" fill="#94a3b8" font-size="12">Sharpe Ratio &uarr;</text>
+    <text x="${w - padR}" y="${h - 10}" text-anchor="end" fill="#94a3b8" font-size="12">Max Drawdown &rarr;</text>
+    <text x="${padL - 10}" y="${h - padB}" text-anchor="end" fill="#64748b" font-size="11">${minS.toFixed(1)}</text>
+    <text x="${padL - 10}" y="${padT + 10}" text-anchor="end" fill="#64748b" font-size="11">${maxS.toFixed(1)}</text>
+    <text x="${w - padR}" y="${h - padB + 20}" text-anchor="middle" fill="#64748b" font-size="11">${(maxD*100).toFixed(0)}%</text>
+
+    <!-- Data points -->
+    ${dots}
+  `;
+}
+
+refresh();
+</script>
+</body>
+</html>

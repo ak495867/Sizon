@@ -71,24 +71,79 @@ class StudioHandler(SimpleHTTPRequestHandler):
             return
 
         if path.startswith("/api/runs/"):
-            run_id = path[len("/api/runs/") :].strip("/")
-            for r_dir in [self.runs_dir, Path(".")]:
-                target = r_dir / run_id
-                if target.is_dir() and (target / "summary.json").exists():
-                    try:
-                        summary = json.loads((target / "summary.json").read_text())
-                        manifest = (
-                            json.loads((target / "manifest.json").read_text())
-                            if (target / "manifest.json").exists()
-                            else {}
-                        )
-                        self._send_json({"summary": summary, "manifest": manifest})
-                        return
-                    except Exception as exc:
-                        self._send_json({"error": str(exc)}, status=500)
-                        return
-            self._send_json({"error": f"run {run_id} not found"}, status=404)
-            return
+            parts = [p for p in path.split("/") if p]
+            if len(parts) >= 3:
+                run_id = parts[2]
+                sub = parts[3] if len(parts) > 3 else "summary"
+                for r_dir in [self.runs_dir, Path(".")]:
+                    target = r_dir / run_id
+                    if target.is_dir() and (target / "summary.json").exists():
+                        try:
+                            if sub == "pareto":
+                                strat_files = sorted(
+                                    (target / "strategies").glob("*.json")
+                                )
+                                pareto = []
+                                for sf in strat_files[:200]:
+                                    rec = json.loads(sf.read_text())
+                                    pareto.append(
+                                        {
+                                            "id": rec.get(
+                                                "strategy_id", sf.stem
+                                            ),
+                                            "expression": rec.get(
+                                                "expression", ""
+                                            ),
+                                            "sharpe": rec.get(
+                                                "test_metrics", {}
+                                            ).get("sharpe", 0.0),
+                                            "drawdown": rec.get(
+                                                "test_metrics", {}
+                                            ).get("max_drawdown", 0.0),
+                                            "complexity": rec.get(
+                                                "complexity", 1
+                                            ),
+                                        }
+                                    )
+                                self._send_json(pareto)
+                                return
+
+                            summary = json.loads(
+                                (target / "summary.json").read_text()
+                            )
+                            manifest = (
+                                json.loads(
+                                    (target / "manifest.json").read_text()
+                                )
+                                if (target / "manifest.json").exists()
+                                else {}
+                            )
+                            strat_files = sorted(
+                                (target / "strategies").glob("*.json")
+                            )
+                            loaded = [
+                                json.loads(sf.read_text())
+                                for sf in strat_files[:30]
+                            ]
+                            loaded.sort(
+                                key=lambda x: x.get("test_metrics", {}).get(
+                                    "sharpe", 0
+                                ),
+                                reverse=True,
+                            )
+                            self._send_json(
+                                {
+                                    "summary": summary,
+                                    "manifest": manifest,
+                                    "top_strategies": loaded[:5],
+                                }
+                            )
+                            return
+                        except Exception as exc:
+                            self._send_json({"error": str(exc)}, status=500)
+                            return
+                self._send_json({"error": f"run {run_id} not found"}, status=404)
+                return
 
         if path in {"/", "/index.html"}:
             for ui_path in (

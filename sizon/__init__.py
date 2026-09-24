@@ -119,6 +119,25 @@ from .research.reference_validation import (
     fixture_constant_returns,
 )
 from .platform.studio_server import serve
+from .research.ensemble import (
+    AlphaEnsemble,
+    EnsembleResult,
+    EnsembleMember,
+    prune_correlated_strategies,
+)
+from .research.factor_analytics import (
+    FactorAnalytics,
+    compute_rank_ic,
+    quantile_spread,
+    spearman_rank_correlation,
+    factor_autocorrelation,
+)
+from .research.neutralization import (
+    neutralize_market,
+    orthogonalize_signal,
+    signal_novelty_score,
+)
+from .simulation.live import LiveBar, PaperTradingRunner
 
 __all__ = [
     "DataFeed",
@@ -249,4 +268,18 @@ __all__ = [
     "validate_cases",
     "fixture_constant_returns",
     "serve",
+    "AlphaEnsemble",
+    "EnsembleResult",
+    "EnsembleMember",
+    "prune_correlated_strategies",
+    "FactorAnalytics",
+    "compute_rank_ic",
+    "quantile_spread",
+    "spearman_rank_correlation",
+    "factor_autocorrelation",
+    "neutralize_market",
+    "orthogonalize_signal",
+    "signal_novelty_score",
+    "LiveBar",
+    "PaperTradingRunner",
 ]
