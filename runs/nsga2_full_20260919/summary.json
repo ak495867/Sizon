@@ -1,0 +1,30 @@
+{
+  "best_train_metrics": {
+    "complexity": 5.0,
+    "costs_paid": 0.0,
+    "max_drawdown": 0.0,
+    "sharpe": 0.0,
+    "sortino": 0.0,
+    "total_return": 0.0,
+    "trades": 0,
+    "turnover": 0.0
+  },
+  "execution": {
+    "borrow_bps_per_bar": 0.0,
+    "commission_bps": 2.0,
+    "delay_bars": 1,
+    "funding_bps_per_bar": 0.0,
+    "impact_bps_per_turnover": 0.0,
+    "slippage_bps": 2.0,
+    "spread_bps": 1.0
+  },
+  "pareto_sizes": [
+    20,
+    20,
+    20,
+    20,
+    20
+  ],
+  "run_id": "nsga2_full_20260919",
+  "strategies_saved": 100
+}

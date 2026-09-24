@@ -1,0 +1,42 @@
+{
+  "dataset": {
+    "columns": [
+      "close",
+      "high",
+      "low",
+      "open",
+      "symbol",
+      "timestamp",
+      "volume"
+    ],
+    "rows": 20,
+    "sha256": "2da358e01960e004e931725c1069b4030c4ec2c2e9a9a083c4a16f2b9631fe1e",
+    "source": "/home/ubuntu/sizon/examples/sample.csv",
+    "symbols": [
+      "BTC"
+    ],
+    "timezone": "UTC"
+  },
+  "execution": {
+    "borrow_bps_per_bar": 0.0,
+    "commission_bps": 2.0,
+    "delay_bars": 1,
+    "funding_bps_per_bar": 0.0,
+    "impact_bps_per_turnover": 0.0,
+    "slippage_bps": 2.0,
+    "spread_bps": 1.0
+  },
+  "generations": 5,
+  "population": 20,
+  "quality": {
+    "checks": {
+      "duplicates": 0,
+      "rows": 20,
+      "symbols": 1
+    },
+    "errors": [],
+    "ok": true,
+    "warnings": []
+  },
+  "seed": 42
+}

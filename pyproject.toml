@@ -1,0 +1,24 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sizon"
+version = "0.1.0"
+description = "Open-source evolutionary alpha generation engine"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [{name = "Sizon contributors"}]
+dependencies = []
+
+[project.optional-dependencies]
+parquet = ["pyarrow>=14"]
+scientific = ["numpy>=1.24"]
+test = ["pytest>=7"]
+
+[project.scripts]
+sizon = "sizon.cli.main:main"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]

@@ -1,0 +1,39 @@
+# Sizon Research Report
+
+Strategies evaluated: 240
+
+```json
+{
+  "best_train_metrics": {
+    "complexity": 5.0,
+    "costs_paid": 0.00045,
+    "max_drawdown": 0.1285419877838787,
+    "sharpe": -2.626847760639981,
+    "sortino": -3.2176286252324906,
+    "total_return": -0.09993193484605978,
+    "trades": 1,
+    "turnover": 0.0028653295128939827
+  },
+  "execution": {
+    "borrow_bps_per_bar": 0.0,
+    "commission_bps": 2.0,
+    "delay_bars": 1,
+    "funding_bps_per_bar": 0.0,
+    "impact_bps_per_turnover": 0.0,
+    "slippage_bps": 2.0,
+    "spread_bps": 1.0
+  },
+  "pareto_sizes": [
+    9,
+    22,
+    28,
+    22,
+    14,
+    18,
+    21,
+    27
+  ],
+  "run_id": "nsga2_research_20260920",
+  "strategies_saved": 240
+}
+```

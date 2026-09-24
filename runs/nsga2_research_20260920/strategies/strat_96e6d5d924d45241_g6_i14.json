@@ -1,0 +1,411 @@
+{
+  "complexity": 5,
+  "execution": {
+    "borrow_bps_per_bar": 0.0,
+    "commission_bps": 2.0,
+    "delay_bars": 1,
+    "funding_bps_per_bar": 0.0,
+    "impact_bps_per_turnover": 0.0,
+    "slippage_bps": 2.0,
+    "spread_bps": 1.0
+  },
+  "expression": "((RSI(close, 17) - EMA(close, 68)) / ATR(close, 28))",
+  "generation": 6,
+  "genome": {
+    "left": {
+      "left": {
+        "name": "RSI",
+        "period": 17,
+        "type": "primitive"
+      },
+      "op": "-",
+      "right": {
+        "name": "EMA",
+        "period": 68,
+        "type": "primitive"
+      },
+      "type": "binary"
+    },
+    "op": "/",
+    "right": {
+      "name": "ATR",
+      "period": 28,
+      "type": "primitive"
+    },
+    "type": "binary"
+  },
+  "index": 14,
+  "robustness": {
+    "cost_sensitivity": {
+      "method": "cost_sensitivity",
+      "scenarios": [
+        {
+          "cost_multiplier": 0.5,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 1.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 1.0,
+            "spread_bps": 0.5
+          },
+          "metrics": {
+            "costs_paid": 0.000225,
+            "max_drawdown": 0.07845019433151268,
+            "sharpe": -2.955775773654478,
+            "sortino": -3.541622938765367,
+            "total_return": -0.042185281306476474,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "cost_multiplier": 1.0,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 2.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 2.0,
+            "spread_bps": 1.0
+          },
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.0786575897017453,
+            "sharpe": -2.971179826407827,
+            "sortino": -3.5591022417971576,
+            "total_return": -0.04240083811846418,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "cost_multiplier": 1.5,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 3.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 3.0,
+            "spread_bps": 1.5
+          },
+          "metrics": {
+            "costs_paid": 0.000675,
+            "max_drawdown": 0.07886498507197959,
+            "sharpe": -2.986159039254379,
+            "sortino": -3.5758432682652144,
+            "total_return": -0.04261639493045355,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "cost_multiplier": 2.0,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 4.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 4.0,
+            "spread_bps": 2.0
+          },
+          "metrics": {
+            "costs_paid": 0.0009,
+            "max_drawdown": 0.07907238044221343,
+            "sharpe": -3.0007074771688953,
+            "sortino": -3.5918380486449966,
+            "total_return": -0.042831951742442254,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "cost_multiplier": 3.0,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 6.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 6.0,
+            "spread_bps": 3.0
+          },
+          "metrics": {
+            "costs_paid": 0.00135,
+            "max_drawdown": 0.07948717118268078,
+            "sharpe": -3.028491087775335,
+            "sortino": -3.621563953318351,
+            "total_return": -0.043263065366419884,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        }
+      ]
+    },
+    "monte_carlo": {
+      "method": "monte_carlo_trade_reshuffle",
+      "quantiles": {
+        "sharpe": {
+          "p05": -2.971179826407827,
+          "p50": -2.971179826407827,
+          "p95": -2.971179826407827
+        },
+        "total_return": {
+          "p05": -0.04240083811846529,
+          "p50": -0.042400838118464845,
+          "p95": -0.04240083811846462
+        }
+      },
+      "seed": 6056,
+      "simulations": 10
+    },
+    "parameter_sensitivity": {
+      "method": "parameter_sensitivity",
+      "scenarios": [
+        {
+          "delta": -3,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.07841071457998161,
+            "sharpe": -2.8216678022017385,
+            "sortino": -3.392443635336602,
+            "total_return": -0.040465052044858285,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "delta": -2,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.07841071457998117,
+            "sharpe": -2.889029500630038,
+            "sortino": -3.466995786546275,
+            "total_return": -0.04133140289499282,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "delta": -1,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.07841071457998139,
+            "sharpe": -2.939211433677854,
+            "sortino": -3.5230114320026704,
+            "total_return": -0.04198190421453818,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "delta": 0,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.0786575897017453,
+            "sharpe": -2.971179826407827,
+            "sortino": -3.5591022417971576,
+            "total_return": -0.04240083811846418,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "delta": 1,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.07882542975842033,
+            "sharpe": -2.984313253049517,
+            "sortino": -3.574133265244978,
+            "total_return": -0.04257528303254354,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "delta": 2,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.07874843957539113,
+            "sharpe": -2.9783818207506325,
+            "sortino": -3.5672890645383624,
+            "total_return": -0.04249526312472485,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        },
+        {
+          "delta": 3,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.07841999186819137,
+            "sharpe": -2.95350441535646,
+            "sortino": -3.538791760232818,
+            "total_return": -0.04215389031303085,
+            "trades": 1,
+            "turnover": 0.006711409395973154
+          }
+        }
+      ]
+    }
+  },
+  "status": "evaluated",
+  "strategy_id": "strat_96e6d5d924d45241",
+  "test_metrics": {
+    "complexity": 5.0,
+    "costs_paid": 0.00045,
+    "max_drawdown": 0.0786575897017453,
+    "sharpe": -2.971179826407827,
+    "sortino": -3.5591022417971576,
+    "total_return": -0.04240083811846418,
+    "trades": 1,
+    "turnover": 0.006711409395973154
+  },
+  "train_metrics": {
+    "complexity": 5.0,
+    "costs_paid": 0.00045,
+    "max_drawdown": 0.12854198778387815,
+    "sharpe": -3.0477414385921624,
+    "sortino": -3.6776395869689864,
+    "total_return": -0.11329320763695538,
+    "trades": 1,
+    "turnover": 0.0028653295128939827
+  },
+  "validation": {
+    "purged_cross_validation": {
+      "embargo_bars": 1,
+      "fold_details": [
+        {
+          "fold": 0,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.059182407383764235,
+            "sharpe": -1.2693783580968236,
+            "sortino": -1.6593738719391111,
+            "total_return": -0.02240374044881288,
+            "trades": 1,
+            "turnover": 0.006060606060606061
+          },
+          "test_end": 166,
+          "test_start": 0,
+          "train_end": 0,
+          "train_start": 167
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.06738963123530783,
+            "sharpe": -0.7606885371995122,
+            "sortino": -1.0027749405094928,
+            "total_return": -0.012896160595421535,
+            "trades": 1,
+            "turnover": 0.006060606060606061
+          },
+          "test_end": 332,
+          "test_start": 166,
+          "train_end": 98,
+          "train_start": 333
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.0784107145799815,
+            "sharpe": -1.08219999580211,
+            "sortino": -1.383156919085678,
+            "total_return": -0.01779275241823286,
+            "trades": 1,
+            "turnover": 0.005988023952095809
+          },
+          "test_end": 500,
+          "test_start": 332,
+          "train_end": 264,
+          "train_start": 264
+        }
+      ],
+      "folds": 3,
+      "leakage_control": "purge removes lookback overlap and embargo removes post-test adjacency",
+      "method": "purged_cross_validation",
+      "metrics": {
+        "costs_paid": 0.00045000000000000004,
+        "max_drawdown": 0.06832758439968452,
+        "sharpe": -1.0374222970328153,
+        "sortino": -1.3484352438447607,
+        "total_return": -0.01769755115415576,
+        "trades": 1.0,
+        "turnover": 0.006036412024435976
+      },
+      "purge_bars": 68
+    },
+    "walk_forward": {
+      "fold_details": [
+        {
+          "fold": 0,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.04837407574694308,
+            "sharpe": -4.172170679482286,
+            "sortino": -4.847628028704028,
+            "total_return": -0.04079333609945923,
+            "trades": 1,
+            "turnover": 0.010101010101010102
+          },
+          "test_end": 350,
+          "test_start": 250,
+          "train_end": 250,
+          "train_start": 0
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.06171478863792601,
+            "sharpe": -5.697715221988486,
+            "sortino": -6.00260820565404,
+            "total_return": -0.04953472978684248,
+            "trades": 1,
+            "turnover": 0.010101010101010102
+          },
+          "test_end": 450,
+          "test_start": 350,
+          "train_end": 350,
+          "train_start": 0
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "costs_paid": 0.00045,
+            "max_drawdown": 0.0023887995613607327,
+            "sharpe": 8.351760925519839,
+            "sortino": 39.009410752414624,
+            "total_return": 0.024369468419625395,
+            "trades": 1,
+            "turnover": 0.02040816326530612
+          },
+          "test_end": 500,
+          "test_start": 450,
+          "train_end": 450,
+          "train_start": 0
+        }
+      ],
+      "folds": 3,
+      "leakage_control": "future test windows are never used in preceding train windows",
+      "method": "walk_forward",
+      "metrics": {
+        "costs_paid": 0.00045000000000000004,
+        "max_drawdown": 0.03749255464874327,
+        "sharpe": -0.5060416586503109,
+        "sortino": 9.386391506018851,
+        "total_return": -0.021986199155558772,
+        "trades": 1.0,
+        "turnover": 0.013536727822442108
+      }
+    }
+  },
+  "warnings": []
+}

@@ -1,0 +1,411 @@
+{
+  "complexity": 5,
+  "execution": {
+    "borrow_bps_per_bar": 0.0,
+    "commission_bps": 2.0,
+    "delay_bars": 1,
+    "funding_bps_per_bar": 0.0,
+    "impact_bps_per_turnover": 0.0,
+    "slippage_bps": 2.0,
+    "spread_bps": 1.0
+  },
+  "expression": "((RSI(close, 15) - EMA(close, 59)) / ATR(close, 16))",
+  "generation": 4,
+  "genome": {
+    "left": {
+      "left": {
+        "name": "RSI",
+        "period": 15,
+        "type": "primitive"
+      },
+      "op": "-",
+      "right": {
+        "name": "EMA",
+        "period": 59,
+        "type": "primitive"
+      },
+      "type": "binary"
+    },
+    "op": "/",
+    "right": {
+      "name": "ATR",
+      "period": 16,
+      "type": "primitive"
+    },
+    "type": "binary"
+  },
+  "index": 18,
+  "robustness": {
+    "cost_sensitivity": {
+      "method": "cost_sensitivity",
+      "scenarios": [
+        {
+          "cost_multiplier": 0.5,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 1.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 1.0,
+            "spread_bps": 0.5
+          },
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "cost_multiplier": 1.0,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 2.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 2.0,
+            "spread_bps": 1.0
+          },
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "cost_multiplier": 1.5,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 3.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 3.0,
+            "spread_bps": 1.5
+          },
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "cost_multiplier": 2.0,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 4.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 4.0,
+            "spread_bps": 2.0
+          },
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "cost_multiplier": 3.0,
+          "execution": {
+            "borrow_bps_per_bar": 0.0,
+            "commission_bps": 6.0,
+            "delay_bars": 1,
+            "funding_bps_per_bar": 0.0,
+            "impact_bps_per_turnover": 0.0,
+            "slippage_bps": 6.0,
+            "spread_bps": 3.0
+          },
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        }
+      ]
+    },
+    "monte_carlo": {
+      "method": "monte_carlo_trade_reshuffle",
+      "quantiles": {
+        "sharpe": {
+          "p05": 0.0,
+          "p50": 0.0,
+          "p95": 0.0
+        },
+        "total_return": {
+          "p05": 0.0,
+          "p50": 0.0,
+          "p95": 0.0
+        }
+      },
+      "seed": 4060,
+      "simulations": 30
+    },
+    "parameter_sensitivity": {
+      "method": "parameter_sensitivity",
+      "scenarios": [
+        {
+          "delta": -3,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "delta": -2,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "delta": -1,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "delta": 0,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "delta": 1,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "delta": 2,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        },
+        {
+          "delta": 3,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          }
+        }
+      ]
+    }
+  },
+  "status": "evaluated",
+  "strategy_id": "strat_77f173f9a619585f",
+  "test_metrics": {
+    "complexity": 5.0,
+    "costs_paid": 0.0,
+    "max_drawdown": 0.0,
+    "sharpe": 0.0,
+    "sortino": 0.0,
+    "total_return": 0.0,
+    "trades": 0,
+    "turnover": 0.0
+  },
+  "train_metrics": {
+    "complexity": 5.0,
+    "costs_paid": 0.0,
+    "max_drawdown": 0.0,
+    "sharpe": 0.0,
+    "sortino": 0.0,
+    "total_return": 0.0,
+    "trades": 0,
+    "turnover": 0.0
+  },
+  "validation": {
+    "purged_cross_validation": {
+      "embargo_bars": 1,
+      "fold_details": [
+        {
+          "fold": 0,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          },
+          "test_end": 6,
+          "test_start": 0,
+          "train_end": 0,
+          "train_start": 7
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          },
+          "test_end": 12,
+          "test_start": 6,
+          "train_end": 0,
+          "train_start": 13
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          },
+          "test_end": 20,
+          "test_start": 12,
+          "train_end": 0,
+          "train_start": 0
+        }
+      ],
+      "folds": 3,
+      "leakage_control": "purge removes lookback overlap and embargo removes post-test adjacency",
+      "method": "purged_cross_validation",
+      "metrics": {
+        "costs_paid": 0.0,
+        "max_drawdown": 0.0,
+        "sharpe": 0.0,
+        "sortino": 0.0,
+        "total_return": 0.0,
+        "trades": 0.0,
+        "turnover": 0.0
+      },
+      "purge_bars": 59
+    },
+    "walk_forward": {
+      "fold_details": [
+        {
+          "fold": 0,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          },
+          "test_end": 14,
+          "test_start": 10,
+          "train_end": 10,
+          "train_start": 0
+        },
+        {
+          "fold": 1,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          },
+          "test_end": 18,
+          "test_start": 14,
+          "train_end": 14,
+          "train_start": 0
+        },
+        {
+          "fold": 2,
+          "metrics": {
+            "costs_paid": 0.0,
+            "max_drawdown": 0.0,
+            "sharpe": 0.0,
+            "sortino": 0.0,
+            "total_return": 0.0,
+            "trades": 0,
+            "turnover": 0.0
+          },
+          "test_end": 20,
+          "test_start": 18,
+          "train_end": 18,
+          "train_start": 0
+        }
+      ],
+      "folds": 3,
+      "leakage_control": "future test windows are never used in preceding train windows",
+      "method": "walk_forward",
+      "metrics": {
+        "costs_paid": 0.0,
+        "max_drawdown": 0.0,
+        "sharpe": 0.0,
+        "sortino": 0.0,
+        "total_return": 0.0,
+        "trades": 0.0,
+        "turnover": 0.0
+      }
+    }
+  },
+  "warnings": []
+}

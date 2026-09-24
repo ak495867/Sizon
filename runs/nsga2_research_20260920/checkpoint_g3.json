@@ -1,0 +1,697 @@
+{
+  "version": 1,
+  "generation": 3,
+  "seed": 42,
+  "population": [
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 58
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 24
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 15
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 24
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 64
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 19
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 19
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 15
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 14
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 18
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 58
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 18
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 26
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 66
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 24
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 62
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 19
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 20
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 55
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 21
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 21
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 15
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 58
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 11
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 68
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 19
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 22
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 64
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 19
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 14
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 19
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 21
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 20
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 59
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 19
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 13
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 63
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 24
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 20
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 58
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 16
+      }
+    },
+    {
+      "type": "binary",
+      "op": "/",
+      "left": {
+        "type": "binary",
+        "op": "-",
+        "left": {
+          "type": "primitive",
+          "name": "RSI",
+          "period": 17
+        },
+        "right": {
+          "type": "primitive",
+          "name": "EMA",
+          "period": 68
+        }
+      },
+      "right": {
+        "type": "primitive",
+        "name": "ATR",
+        "period": 19
+      }
+    }
+  ]
+}
