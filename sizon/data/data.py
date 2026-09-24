@@ -98,10 +98,10 @@ class DataFeed:
             if key in seen:
                 report.errors.append(f"duplicate timestamp for {key[0]} at {key[1]}")
             seen.add(key)
-            o, h, l, c, v = (row[k] for k in PRICE_FIELDS)
-            if h < max(o, c) or l > min(o, c) or h < l:
+            o, h, lo, c, v = (row[k] for k in PRICE_FIELDS)
+            if h < max(o, c) or lo > min(o, c) or h < lo:
                 report.errors.append(f"OHLC inconsistency on row {i}")
-            if any(not math.isfinite(x) for x in (o, h, l, c, v)):
+            if any(not math.isfinite(x) for x in (o, h, lo, c, v)):
                 report.errors.append(f"non-finite value on row {i}")
             if v < 0:
                 report.errors.append(f"negative volume on row {i}")

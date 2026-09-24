@@ -62,7 +62,7 @@ def simulate_limit_fill(
     remaining = float(quantity)
     notional = fees = filled = 0.0
     queue = max(0.0, queue_ahead)
-    available = sum(l.quantity for l in levels) * participation_limit
+    available = sum(lvl.quantity for lvl in levels) * participation_limit
     for level in levels:
         valid = (
             level.price <= limit_price
@@ -88,7 +88,7 @@ def execute_market(
     levels = book.asks if order_side.lower() == "buy" else book.bids
     remaining = float(quantity)
     notional = filled = 0.0
-    available = sum(l.quantity for l in levels)
+    available = sum(lvl.quantity for lvl in levels)
     for level in levels:
         take = min(remaining, level.quantity)
         filled += take

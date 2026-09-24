@@ -215,8 +215,8 @@ class Primitive(Node):
         if name == "VWAP":
             pv = []
             vv = []
-            for h, l, c, v in zip(high, low, close, volume):
-                pv.append((h + l + c) / 3 * v)
+            for h, lo, c, v in zip(high, low, close, volume):
+                pv.append((h + lo + c) / 3 * v)
                 vv.append(v)
             return [
                 (
@@ -282,10 +282,10 @@ class Primitive(Node):
                         else [
                             (
                                 math.nan
-                                if math.isnan(u) or math.isnan(l) or u == l
-                                else (c - l) / (u - l)
+                                if math.isnan(u) or math.isnan(lo) or u == lo
+                                else (c - lo) / (u - lo)
                             )
-                            for c, u, l in zip(close, upper, lower)
+                            for c, u, lo in zip(close, upper, lower)
                         ]
                     )
                 )
@@ -313,7 +313,7 @@ class Primitive(Node):
                 return _rolling(close, p, lambda a: (a[-1] - a[0]) / max(1, p - 1))
             if "RANGE" in name or "BAND" in name:
                 return _rolling(
-                    [h - l for h, l in zip(high, low)], p, lambda a: sum(a) / p
+                    [h - lo for h, lo in zip(high, low)], p, lambda a: sum(a) / p
                 )
             if "VOLUME" in name or "FLOW" in name:
                 return _rolling(volume, p, lambda a: sum(a) / p)
