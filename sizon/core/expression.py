@@ -583,6 +583,13 @@ def _kernel_rolling_min(p, close, high, low, open_, volume, ctx, name):
         return _rolling(close, p, _kurtosis)
 
 
+def _kernel_funding_rate(p, close, high, low, open_, volume, ctx, name):
+    return ctx.columns.get("funding_rate", [0.0] * len(close))
+
+def _kernel_orderbook_imbalance(p, close, high, low, open_, volume, ctx, name):
+    return ctx.columns.get("imbalance", [0.0] * len(close))
+
+
 KERNELS = {
     "EMA": _kernel_ema,
     "SMA": _kernel_sma,
@@ -655,6 +662,8 @@ KERNELS = {
     "ROLLING_MEAN": _kernel_rolling_min,
     "ROLLING_KURTOSIS": _kernel_rolling_min,
     "ROLLING_STD": _kernel_rolling_min,
+    "FUNDING_RATE": _kernel_funding_rate,
+    "ORDERBOOK_IMBALANCE": _kernel_orderbook_imbalance,
 }
 
 @dataclass(frozen=True)
@@ -752,7 +761,7 @@ ALL_PRIMITIVES = (
     "BUY_PRESSURE SELL_PRESSURE UP_DOWN_VOLUME IMBALANCE FLOW_ZSCORE "
     "BETA_MARKET ALPHA_MARKET RESIDUAL_RETURN RELATIVE_STRENGTH CROSS_SECTIONAL_RANK CROSS_SECTIONAL_ZSCORE DISTANCE_TO_MEAN PAIR_SPREAD PAIR_ZSCORE SECTOR_RANK "
     "LAG_1 LAG_2 LAG_5 DELTA_1 DELTA_5 ROLLING_MEAN ROLLING_STD ROLLING_MIN ROLLING_MAX ROLLING_MEDIAN ROLLING_SKEW ROLLING_KURTOSIS "
-    "CROSS_ABOVE CROSS_BELOW RISING FALLING OVERBOUGHT OVERSOLD TREND_REGIME VOLATILITY_REGIME LIQUIDITY_REGIME"
+    "CROSS_ABOVE CROSS_BELOW RISING FALLING OVERBOUGHT OVERSOLD TREND_REGIME VOLATILITY_REGIME LIQUIDITY_REGIME FUNDING_RATE ORDERBOOK_IMBALANCE"
 )
 ALL_PRIMITIVES = tuple(dict.fromkeys(x.upper() for x in ALL_PRIMITIVES.split()))
 PRIMITIVES = {name: Primitive(name) for name in ALL_PRIMITIVES}

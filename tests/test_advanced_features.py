@@ -123,3 +123,34 @@ def test_studio_api_runs(tmp_path):
         assert data["strategies_saved"] == 2
     finally:
         StudioHandler.runs_dir = old_runs_dir
+
+
+def test_regime_classifier(sample_feed):
+    from sizon.research.regime import RegimeClassifier
+    classifier = RegimeClassifier(n_components=2, window=5)
+    classifier.fit(sample_feed)
+    predictions = classifier.predict(sample_feed)
+    
+    assert len(predictions) == len(sample_feed.rows)
+    assert all(isinstance(p, int) for p in predictions)
+    assert all(0 <= p < 2 for p in predictions)
+    
+    descriptions = classifier.describe_regimes()
+    assert len(descriptions) == 2
+    assert "Regime 0:" in descriptions[0]
+    assert "Regime 1:" in descriptions[1]
+
+def test_alpha_ensemble_hrp(sample_feed):
+    from sizon.research.ensemble import AlphaEnsemble
+    from sizon.core.expression import example_genome
+    
+    # We need multiple genomes for the ensemble
+    genomes = [example_genome() for _ in range(3)]
+    ens = AlphaEnsemble(method="hrp", max_correlation=0.99)
+    result = ens.fit(sample_feed, genomes)
+    
+    assert hasattr(result, "metrics")
+    assert "sharpe" in result.metrics
+    assert hasattr(result, "weights")
+    # Weights should sum to ~1
+    assert abs(sum(result.weights.values()) - 1.0) < 1e-5

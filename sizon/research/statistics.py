@@ -32,16 +32,12 @@ def bootstrap_mean(values: list[float], simulations: int = 1000, seed: int = 7) 
 
 
 def deflated_sharpe_ratio(
-    observed_sharpe: float, trials: int, observations: int, skew: float = 0.0, kurtosis: float = 3.0
-) -> dict:
-    penalty = math.sqrt(2 * math.log(max(1, trials))) / math.sqrt(max(1, observations))
-    return {
-        "observed_sharpe": observed_sharpe,
-        "trial_penalty": penalty,
-        "deflated_sharpe": observed_sharpe - penalty,
-        "skew": skew,
-        "kurtosis": kurtosis,
-    }
+    sharpe: float, trials: int, expected_mean: float = 0.0, variance: float = 1.0
+) -> float:
+    # Expected maximum SR = expected_mean + sqrt(variance * 2 * log(trials))
+    # Approximation of Euler-Mascheroni formula
+    expected_max = expected_mean + math.sqrt(variance * 2 * math.log(max(1, trials)))
+    return sharpe - expected_max
 
 
 def probability_of_backtest_overfitting(sharpes: list[float]) -> dict:

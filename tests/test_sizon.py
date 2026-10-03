@@ -83,3 +83,22 @@ def test_bad_ohlc_is_rejected(tmp_path):
     )
     with pytest.raises(ValueError, match="OHLC"):
         DataFeed.from_csv(path)
+
+
+def test_alt_data_loaded_and_evaluated(tmp_path):
+    from sizon.core.expression import Primitive, Binary
+    path = tmp_path / "alt.csv"
+    path.write_text(
+        "timestamp,symbol,open,high,low,close,volume,funding_rate,imbalance,sentiment\n"
+        "2026-01-01,X,10,12,9,11,100,0.01,0.5,0.9\n"
+        "2026-01-02,X,11,13,10,12,200,0.02,-0.1,0.8\n"
+        "2026-01-03,X,12,14,11,13,300,0.03,0.0,0.7\n"
+    )
+    feed = DataFeed.from_csv(path)
+    ctx = DataFeed.to_context(feed)
+    assert ctx.columns["funding_rate"] == [0.01, 0.02, 0.03]
+    
+    funding_node = Primitive("FUNDING_RATE")
+    imbalance_node = Primitive("ORDERBOOK_IMBALANCE")
+    assert funding_node.evaluate(ctx) == [0.01, 0.02, 0.03]
+    assert imbalance_node.evaluate(ctx) == [0.5, -0.1, 0.0]

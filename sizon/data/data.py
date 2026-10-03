@@ -11,7 +11,7 @@ from typing import Iterable
 
 REQUIRED = ("timestamp", "symbol", "open", "high", "low", "close", "volume")
 PRICE_FIELDS = ("open", "high", "low", "close", "volume")
-
+ALT_FIELDS = ("funding_rate", "imbalance", "sentiment", "options_skew")
 
 @dataclass
 class DataQualityReport:
@@ -65,6 +65,18 @@ class DataFeed:
         raise ValueError(f"Unsupported data format: {path.suffix}")
 
     @classmethod
+    def to_context(cls, feed: "DataFeed") -> "Context":
+        columns = {}
+        if not feed.rows:
+            return None
+        keys = list(feed.rows[0].keys())
+        for k in keys:
+            if k not in ("timestamp", "symbol"):
+                columns[k] = feed.column(k)
+        from sizon.core.expression import Context
+        return Context(columns)
+
+    @classmethod
     def _validated(cls, rows: Iterable[dict], source: str) -> "DataFeed":
         rows = list(rows)
         if not rows:
@@ -78,6 +90,12 @@ class DataFeed:
             try:
                 for key in PRICE_FIELDS:
                     item[key] = float(item[key])
+                for key in ALT_FIELDS:
+                    if key in item:
+                        try:
+                            item[key] = float(item[key])
+                        except (TypeError, ValueError):
+                            item[key] = float("nan")
             except (TypeError, ValueError, KeyError) as exc:
                 raise ValueError(f"Invalid numeric value on row {n}: {exc}") from exc
             item["timestamp"] = str(item["timestamp"])

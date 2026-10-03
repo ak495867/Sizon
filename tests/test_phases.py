@@ -64,3 +64,19 @@ def test_experiment_database_and_nsga_selection(tmp_path):
     )
     assert db.query("select count(*) from strategies")[0][0] == 1
     db.close()
+
+
+def test_cpcv_splits():
+    from sizon.research.cpcv import generate_cpcv_splits
+    
+    splits = list(generate_cpcv_splits(6, 3, 1, purge_bars=0, embargo_bars=0))
+    
+    assert len(splits) == 3
+    assert splits[0][1] == [0, 1]
+    assert splits[0][0] == [2, 3, 4, 5]
+    
+    assert splits[1][1] == [2, 3]
+    assert splits[1][0] == [0, 1, 4, 5]
+    
+    assert splits[2][1] == [4, 5]
+    assert splits[2][0] == [0, 1, 2, 3]

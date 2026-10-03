@@ -194,6 +194,9 @@ class AlphaEnsemble:
             inv_vars = [1.0 / max(1e-12, cov[i][i]) for i in range(k)]
             s = sum(inv_vars) or 1.0
             weights_list = [v / s for v in inv_vars]
+        elif self.method == "hrp":
+            from sizon.research.hrp import hrp_weights
+            weights_list = hrp_weights(cov)
         else:  # equal_weight
             weights_list = [1.0 / k] * k
 

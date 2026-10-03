@@ -99,7 +99,7 @@ def main() -> None:
     )
     p_ens.add_argument(
         "--method",
-        choices=["risk_parity", "min_variance", "inverse_variance", "equal_weight"],
+        choices=["risk_parity", "min_variance", "inverse_variance", "equal_weight", "hrp"],
         default="risk_parity",
     )
     p_ens.add_argument("--max-corr", type=float, default=0.65)

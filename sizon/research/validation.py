@@ -94,3 +94,36 @@ def purged_cross_validation(
         "leakage_control": "purge removes lookback overlap and embargo removes post-test adjacency",
         "fold_details": [f.__dict__ for f in folds],
     }
+
+
+def combinatorial_purged_cv(
+    feed: DataFeed,
+    genome: Node,
+    n_groups: int,
+    n_test_groups: int,
+    execution: ExecutionModel | None = None,
+):
+    from sizon.research.cpcv import generate_cpcv_splits
+    n = len(feed.rows)
+    folds = []
+    
+    for i, (train_indices, test_indices) in enumerate(generate_cpcv_splits(n, n_groups, n_test_groups)):
+        test_rows = [feed.rows[idx] for idx in test_indices]
+        test = _feed(test_rows, feed.source)
+        
+        metrics = run_backtest(test, genome, execution).metrics()
+        
+        train_start = min(train_indices) if train_indices else 0
+        train_end = max(train_indices) if train_indices else 0
+        test_start = min(test_indices) if test_indices else 0
+        test_end = max(test_indices) if test_indices else 0
+        
+        folds.append(FoldResult(i, train_start, train_end, test_start, test_end, metrics))
+        
+    return {
+        **_aggregate(folds),
+        "method": "combinatorial_purged_cv",
+        "n_groups": n_groups,
+        "n_test_groups": n_test_groups,
+        "fold_details": [f.__dict__ for f in folds],
+    }
