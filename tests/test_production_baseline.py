@@ -58,8 +58,8 @@ def test_strict_types_nsga_and_safety():
         gate.authorize(1)
 
 
-def test_engine_checkpoint_resume(tmp_path):
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_engine_checkpoint_resume(tmp_path, sample_feed):
+    feed = sample_feed
     Engine(
         feed,
         population=1,

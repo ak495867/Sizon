@@ -3,7 +3,9 @@
 from __future__ import annotations
 import argparse
 import json
+import logging
 from pathlib import Path
+
 from sizon.core.strategy import genome_from_dict
 from sizon.data.data import DataFeed
 from sizon.platform.studio_server import serve
@@ -12,8 +14,56 @@ from sizon.research.evolution import Engine
 from sizon.research.factor_analytics import FactorAnalytics
 from sizon.simulation.orderbook import microstructure_gauntlet
 
+logger = logging.getLogger("sizon.cli")
 
-def main():
+
+def _load_strategies(run_dir: Path, top_n: int | None = None) -> list[dict]:
+    """Load and sort strategy JSON files from a run directory by test Sharpe.
+
+    Args:
+        run_dir: Path to an experiment run directory containing a 'strategies/' subfolder.
+        top_n: If given, return at most this many records (highest Sharpe first).
+
+    Returns:
+        List of strategy record dicts sorted by test_sharpe descending.
+
+    Raises:
+        SystemExit: If the strategies directory doesn't exist or all files are corrupt.
+    """
+    strat_dir = run_dir / "strategies"
+    if not strat_dir.exists():
+        print(json.dumps({"error": f"No strategies directory found in {run_dir}"}))
+        raise SystemExit(1)
+
+    strat_files = sorted(strat_dir.glob("*.json"))
+    if not strat_files:
+        print(json.dumps({"error": f"No strategy files found in {strat_dir}"}))
+        raise SystemExit(1)
+
+    records: list[dict] = []
+    skipped = 0
+    for sf in strat_files:
+        try:
+            records.append(json.loads(sf.read_text(encoding="utf-8")))
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning("Skipping corrupt strategy file %s: %s", sf.name, exc)
+            skipped += 1
+
+    if not records:
+        print(json.dumps({"error": "All strategy files were corrupt or unreadable"}))
+        raise SystemExit(1)
+
+    if skipped:
+        logger.warning("Skipped %d corrupt strategy file(s)", skipped)
+
+    records.sort(
+        key=lambda r: r.get("test_metrics", {}).get("sharpe", 0.0),
+        reverse=True,
+    )
+    return records[:top_n] if top_n is not None else records
+
+
+def main() -> None:
     parser = argparse.ArgumentParser(
         prog="sizon", description="Institutional Evolutionary Alpha Research Platform"
     )
@@ -49,12 +99,7 @@ def main():
     )
     p_ens.add_argument(
         "--method",
-        choices=[
-            "risk_parity",
-            "min_variance",
-            "inverse_variance",
-            "equal_weight",
-        ],
+        choices=["risk_parity", "min_variance", "inverse_variance", "equal_weight"],
         default="risk_parity",
     )
     p_ens.add_argument("--max-corr", type=float, default=0.65)
@@ -86,11 +131,13 @@ def main():
 
     args = parser.parse_args()
 
+    # ------------------------------------------------------------------ validate
     if args.command == "validate":
         feed = DataFeed.from_path(args.path)
         print(json.dumps(feed.validate(), indent=2))
         return
 
+    # ------------------------------------------------------------------ run
     if args.command == "run":
         feed = DataFeed.from_path(args.path)
         engine = Engine(
@@ -118,15 +165,12 @@ def main():
         )
         return
 
+    # ------------------------------------------------------------------ ensemble
     if args.command == "ensemble":
         run_path = Path(args.run_dir)
         feed = DataFeed.from_path(args.data_path)
-        strat_files = sorted((run_path / "strategies").glob("*.json"))
-        records = [json.loads(sf.read_text()) for sf in strat_files]
-        records.sort(
-            key=lambda r: r.get("test_metrics", {}).get("sharpe", 0), reverse=True
-        )
-        genomes = [genome_from_dict(r["genome"]) for r in records[: args.top_n]]
+        records = _load_strategies(run_path, top_n=args.top_n)
+        genomes = [genome_from_dict(r["genome"]) for r in records]
         ens = AlphaEnsemble(method=args.method, max_correlation=args.max_corr)
         result = ens.fit(feed, genomes)
         print(
@@ -142,33 +186,22 @@ def main():
         )
         return
 
+    # ------------------------------------------------------------------ factor
     if args.command == "factor":
         run_path = Path(args.run_dir)
         feed = DataFeed.from_path(args.data_path)
-        strat_files = sorted((run_path / "strategies").glob("*.json"))
-        if not strat_files:
-            print(json.dumps({"error": "No strategies found in run directory"}))
-            return
-        records = [json.loads(sf.read_text()) for sf in strat_files]
-        records.sort(
-            key=lambda r: r.get("test_metrics", {}).get("sharpe", 0), reverse=True
-        )
+        records = _load_strategies(run_path, top_n=1)
         top_genome = genome_from_dict(records[0]["genome"])
-        analytics = FactorAnalytics.analyze(
-            feed, top_genome, quantiles=args.quantiles
-        )
+        analytics = FactorAnalytics.analyze(feed, top_genome, quantiles=args.quantiles)
         print(json.dumps(analytics, indent=2))
         return
 
+    # ------------------------------------------------------------------ gauntlet
     if args.command == "gauntlet":
         run_path = Path(args.run_dir)
         feed = DataFeed.from_path(args.data_path)
-        strat_files = sorted((run_path / "strategies").glob("*.json"))
-        records = [json.loads(sf.read_text()) for sf in strat_files]
-        records.sort(
-            key=lambda r: r.get("test_metrics", {}).get("sharpe", 0), reverse=True
-        )
-        genomes = [genome_from_dict(r["genome"]) for r in records[: args.top_n]]
+        records = _load_strategies(run_path, top_n=args.top_n)
+        genomes = [genome_from_dict(r["genome"]) for r in records]
         gauntlet_results = microstructure_gauntlet(feed, genomes)
         print(
             json.dumps(
@@ -182,9 +215,11 @@ def main():
         )
         return
 
+    # ------------------------------------------------------------------ studio
     if args.command == "studio":
         print(
-            f"Starting Sizon Studio at http://{args.host}:{args.port} (Serving {args.directory})..."
+            f"Starting Sizon Studio at http://{args.host}:{args.port}"
+            f" (Serving {args.directory})..."
         )
         server = serve(directory=args.directory, host=args.host, port=args.port)
         try:

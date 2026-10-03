@@ -110,6 +110,553 @@ def _kurtosis(chunk):
     return (m4 / (std**4)) - 3.0
 
 
+def _kernel_ema(p, close, high, low, open_, volume, ctx, name):
+    return _ema(close, p)
+
+def _kernel_sma(p, close, high, low, open_, volume, ctx, name):
+    return _rolling(close, p, lambda a: sum(a) / p)
+
+def _kernel_wma(p, close, high, low, open_, volume, ctx, name):
+    return _rolling(
+        close,
+        p,
+        lambda a: sum((i + 1) * v for i, v in enumerate(a)) / (p * (p + 1) / 2),
+    )
+
+def _kernel_hma(p, close, high, low, open_, volume, ctx, name):
+    half = max(2, p // 2)
+    root = max(2, int(math.sqrt(p)))
+    w1 = Primitive("WMA", half).evaluate(Context({"close": close}))
+    w2 = Primitive("WMA", p).evaluate(Context({"close": close}))
+    return Primitive("WMA", root).evaluate(
+        Context(
+            {
+                "close": [
+                    (
+                        2 * a - b
+                        if not (math.isnan(a) or math.isnan(b))
+                        else math.nan
+                    )
+                    for a, b in zip(w1, w2)
+                ]
+            }
+        )
+    )
+
+def _kernel_high(p, close, high, low, open_, volume, ctx, name):
+    return _rolling(high, p, max)
+
+def _kernel_low(p, close, high, low, open_, volume, ctx, name):
+    return _rolling(low, p, min)
+
+def _kernel_momentum(p, close, high, low, open_, volume, ctx, name):
+    out = [math.nan] * len(close)
+    for i in range(p, len(close)):
+        out[i] = (
+            close[i] - close[i - p]
+            if name == "MOMENTUM"
+            else close[i] / close[i - p] - 1
+        )
+    return out
+
+def _kernel_rsi(p, close, high, low, open_, volume, ctx, name):
+    out = [math.nan] * len(close)
+    for i in range(p, len(close)):
+        gains = [
+            max(0, close[j] - close[j - 1]) for j in range(i - p + 1, i + 1)
+        ]
+        losses = [
+            max(0, close[j - 1] - close[j]) for j in range(i - p + 1, i + 1)
+        ]
+        avg = sum(losses) / p
+        out[i] = 100.0 if avg == 0 else 100 - 100 / (1 + (sum(gains) / p) / avg)
+    return out
+
+def _kernel_atr(p, close, high, low, open_, volume, ctx, name):
+    tr = [0.0] + [
+        max(
+            high[i] - low[i],
+            abs(high[i] - close[i - 1]),
+            abs(low[i] - close[i - 1]),
+        )
+        for i in range(1, len(close))
+    ]
+    return _rolling(tr, p, lambda a: sum(a) / p)
+
+def _kernel_volatility(p, close, high, low, open_, volume, ctx, name):
+    rets = [0.0] + [close[i] / close[i - 1] - 1 for i in range(1, len(close))]
+    return _rolling(
+        rets,
+        p,
+        lambda a: math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p)
+        * math.sqrt(252),
+    )
+
+def _kernel_bollinger_bandwidth(p, close, high, low, open_, volume, ctx, name):
+    sma = Primitive("SMA", p).evaluate(ctx)
+    sd = _rolling(
+        close, p, lambda a: math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p)
+    )
+    return [
+        math.nan if math.isnan(m) else 4 * s / m if m else math.nan
+        for m, s in zip(sma, sd)
+    ]
+
+def _kernel_stochastic(p, close, high, low, open_, volume, ctx, name):
+    hh = Primitive("HIGHEST_HIGH", p).evaluate(ctx)
+    ll = Primitive("LOWEST_LOW", p).evaluate(ctx)
+    return [
+        (
+            math.nan
+            if math.isnan(a) or math.isnan(b) or a == b
+            else (c - b) / (a - b) * 100
+        )
+        for a, b, c in zip(hh, ll, close)
+    ]
+
+def _kernel_williams_r(p, close, high, low, open_, volume, ctx, name):
+    return [
+        v - 100 if not math.isnan(v) else v
+        for v in Primitive("STOCHASTIC", p).evaluate(ctx)
+    ]
+
+def _kernel_cci(p, close, high, low, open_, volume, ctx, name):
+    typical = [(a + b + c) / 3 for a, b, c in zip(high, low, close)]
+    sma = _rolling(typical, p, lambda a: sum(a) / p)
+    return [
+        (
+            math.nan
+            if math.isnan(m)
+            else (
+                (t - m)
+                / (
+                    0.015
+                    * sum(
+                        abs(v - m) for v in typical[max(0, i - p + 1) : i + 1]
+                    )
+                    / p
+                )
+                if sum(abs(v - m) for v in typical[max(0, i - p + 1) : i + 1])
+                else 0
+            )
+        )
+        for i, (t, m) in enumerate(zip(typical, sma))
+    ]
+
+def _kernel_obv(p, close, high, low, open_, volume, ctx, name):
+    out = [0.0]
+    for i in range(1, len(close)):
+        out.append(
+            out[-1]
+            + (
+                volume[i]
+                if close[i] > close[i - 1]
+                else -volume[i] if close[i] < close[i - 1] else 0
+            )
+        )
+    return out
+
+def _kernel_dollar_volume(p, close, high, low, open_, volume, ctx, name):
+    return [a * b for a, b in zip(close, volume)]
+
+def _kernel_volume_zscore(p, close, high, low, open_, volume, ctx, name):
+    return _rolling(
+        volume,
+        p,
+        lambda a: (a[-1] - sum(a) / p)
+        / (math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p) or 1),
+    )
+
+def _kernel_vwap(p, close, high, low, open_, volume, ctx, name):
+    pv = []
+    vv = []
+    for h, lo, c, v in zip(high, low, close, volume):
+        pv.append((h + lo + c) / 3 * v)
+        vv.append(v)
+    return [
+        (
+            sum(pv[max(0, i - p + 1) : i + 1])
+            / max(1, sum(vv[max(0, i - p + 1) : i + 1]))
+            if i >= p - 1
+            else math.nan
+        )
+        for i in range(len(close))
+    ]
+
+def _kernel_macd(p, close, high, low, open_, volume, ctx, name):
+    fast = _ema(close, max(2, p // 2))
+    slow = _ema(close, p)
+    return [a - b for a, b in zip(fast, slow)]
+
+def _kernel_dema(p, close, high, low, open_, volume, ctx, name):
+    first = _ema(close, p)
+    second = _ema(first, p)
+    return [2 * a - b for a, b in zip(first, second)]
+
+def _kernel_tema(p, close, high, low, open_, volume, ctx, name):
+    first = _ema(close, p)
+    second = _ema(first, p)
+    third = _ema(second, p)
+    return [3 * a - 3 * b + c for a, b, c in zip(first, second, third)]
+
+def _kernel_donchian_upper(p, close, high, low, open_, volume, ctx, name):
+    upper = _rolling(high, p, max)
+    lower = _rolling(low, p, min)
+    return (
+        upper
+        if name.endswith("UPPER")
+        else (
+            lower
+            if name.endswith("LOWER")
+            else [
+                (
+                    (a + b) / 2
+                    if not math.isnan(a) and not math.isnan(b)
+                    else math.nan
+                )
+                for a, b in zip(upper, lower)
+            ]
+        )
+    )
+
+def _kernel_bb_middle(p, close, high, low, open_, volume, ctx, name):
+    middle = Primitive("SMA", p).evaluate(ctx)
+    sd = _rolling(
+        close, p, lambda a: math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p)
+    )
+    upper = [
+        m + 2 * s if not math.isnan(m) else math.nan for m, s in zip(middle, sd)
+    ]
+    lower = [
+        m - 2 * s if not math.isnan(m) else math.nan for m, s in zip(middle, sd)
+    ]
+    return (
+        upper
+        if name == "BB_UPPER"
+        else (
+            lower
+            if name == "BB_LOWER"
+            else (
+                middle
+                if name == "BB_MIDDLE"
+                else [
+                    (
+                        math.nan
+                        if math.isnan(u) or math.isnan(lo) or u == lo
+                        else (c - lo) / (u - lo)
+                    )
+                    for c, u, lo in zip(close, upper, lower)
+                ]
+            )
+        )
+    )
+
+def _kernel_ppo(p, close, high, low, open_, volume, ctx, name):
+    fast = _ema(close, max(2, p // 2))
+    slow = _ema(close, p)
+    return [(a - b) / b if b else math.nan for a, b in zip(fast, slow)]
+
+def _kernel_kama(p, close, high, low, open_, volume, ctx, name):
+    return _kama(close, p)
+
+def _kernel_zlema(p, close, high, low, open_, volume, ctx, name):
+    return _zlema(close, p)
+
+def _kernel_trima(p, close, high, low, open_, volume, ctx, name):
+    half = max(2, (p + 1) // 2)
+    first = Primitive("SMA", half).evaluate(ctx)
+    return Primitive("SMA", half).evaluate(
+        Context({"close": [(0.0 if math.isnan(v) else v) for v in first]})
+    )
+
+def _kernel_parkinson_vol(p, close, high, low, open_, volume, ctx, name):
+    hl = [
+        (math.log(max(1e-12, h) / max(1e-12, lo)) ** 2) / (4 * math.log(2))
+        for h, lo in zip(high, low)
+    ]
+    return _rolling(
+        hl, p, lambda a: math.sqrt(max(0.0, sum(a) / p)) * math.sqrt(252)
+    )
+
+def _kernel_gk_vol(p, close, high, low, open_, volume, ctx, name):
+    gk = [
+        0.5 * (math.log(max(1e-12, h) / max(1e-12, lo)) ** 2)
+        - (2 * math.log(2) - 1)
+        * (math.log(max(1e-12, c) / max(1e-12, o)) ** 2)
+        for o, h, lo, c in zip(open_, high, low, close)
+    ]
+    return _rolling(
+        gk, p, lambda a: math.sqrt(max(0.0, sum(a) / p)) * math.sqrt(252)
+    )
+
+def _kernel_chaikin_money_flow(p, close, high, low, open_, volume, ctx, name):
+    mfv = [
+        (((c - lo) - (h - c)) / max(1e-12, h - lo)) * v
+        if h > lo
+        else 0.0
+        for h, lo, c, v in zip(high, low, close, volume)
+    ]
+    vol_sum = _rolling(volume, p, sum)
+    mfv_sum = _rolling(mfv, p, sum)
+    return [
+        m / max(1e-12, vs)
+        if not (math.isnan(m) or math.isnan(vs))
+        else math.nan
+        for m, vs in zip(mfv_sum, vol_sum)
+    ]
+
+def _kernel_money_flow_index(p, close, high, low, open_, volume, ctx, name):
+    tp = [(h + lo + c) / 3 for h, lo, c in zip(high, low, close)]
+    pos = [0.0] * len(tp)
+    neg = [0.0] * len(tp)
+    for i in range(1, len(tp)):
+        if tp[i] > tp[i - 1]:
+            pos[i] = tp[i] * volume[i]
+        elif tp[i] < tp[i - 1]:
+            neg[i] = tp[i] * volume[i]
+    pos_sum = _rolling(pos, p, sum)
+    neg_sum = _rolling(neg, p, sum)
+    return [
+        (
+            100.0
+            if ns == 0
+            else 100 - 100 / (1 + ps / ns)
+            if not (math.isnan(ps) or math.isnan(ns))
+            else math.nan
+        )
+        for ps, ns in zip(pos_sum, neg_sum)
+    ]
+
+def _kernel_trix(p, close, high, low, open_, volume, ctx, name):
+    e1 = _ema(close, p)
+    e2 = _ema(e1, p)
+    e3 = _ema(e2, p)
+    out = [math.nan] * len(close)
+    for i in range(1, len(close)):
+        out[i] = (
+            (e3[i] - e3[i - 1]) / e3[i - 1] * 100 if e3[i - 1] else 0.0
+        )
+    return out
+
+def _kernel_tsi(p, close, high, low, open_, volume, ctx, name):
+    mom = [0.0] + [close[i] - close[i - 1] for i in range(1, len(close))]
+    r = max(2, p)
+    s = max(2, p // 2)
+    em1 = _ema(mom, r)
+    em2 = _ema(em1, s)
+    absm1 = _ema([abs(x) for x in mom], r)
+    absm2 = _ema(absm1, s)
+    return [
+        100 * m / max(1e-12, a)
+        if not (math.isnan(m) or math.isnan(a))
+        else math.nan
+        for m, a in zip(em2, absm2)
+    ]
+
+def _kernel_kst(p, close, high, low, open_, volume, ctx, name):
+    r1 = _rolling(
+        close, max(2, p // 2), lambda a: (a[-1] - a[0]) / max(1e-12, a[0])
+    )
+    r2 = _rolling(close, p, lambda a: (a[-1] - a[0]) / max(1e-12, a[0]))
+    r3 = _rolling(
+        close, int(p * 1.5), lambda a: (a[-1] - a[0]) / max(1e-12, a[0])
+    )
+    r4 = _rolling(close, p * 2, lambda a: (a[-1] - a[0]) / max(1e-12, a[0]))
+    sr1 = _ema([(0.0 if math.isnan(v) else v) for v in r1], max(2, p // 2))
+    sr2 = _ema([(0.0 if math.isnan(v) else v) for v in r2], max(2, p // 2))
+    sr3 = _ema([(0.0 if math.isnan(v) else v) for v in r3], max(2, p // 2))
+    sr4 = _ema([(0.0 if math.isnan(v) else v) for v in r4], p)
+    return [a + 2 * b + 3 * c + 4 * d for a, b, c, d in zip(sr1, sr2, sr3, sr4)]
+
+def _kernel_cmo(p, close, high, low, open_, volume, ctx, name):
+    out = [math.nan] * len(close)
+    for i in range(p, len(close)):
+        gains = sum(
+            max(0, close[j] - close[j - 1]) for j in range(i - p + 1, i + 1)
+        )
+        losses = sum(
+            max(0, close[j - 1] - close[j]) for j in range(i - p + 1, i + 1)
+        )
+        denom = gains + losses
+        out[i] = 100 * (gains - losses) / denom if denom else 0.0
+    return out
+
+def _kernel_keltner_middle(p, close, high, low, open_, volume, ctx, name):
+    mid = _ema(close, p)
+    tr = Primitive("ATR", p).evaluate(ctx)
+    if name.endswith("UPPER"):
+        return [m + 2 * t for m, t in zip(mid, tr)]
+    if name.endswith("LOWER"):
+        return [m - 2 * t for m, t in zip(mid, tr)]
+    return mid
+
+def _kernel_bb_width(p, close, high, low, open_, volume, ctx, name):
+    up = Primitive("BB_UPPER", p).evaluate(ctx)
+    lo = Primitive("BB_LOWER", p).evaluate(ctx)
+    mid = Primitive("BB_MIDDLE", p).evaluate(ctx)
+    return [
+        (u - l_val) / max(1e-12, m) * 100
+        if not (math.isnan(u) or math.isnan(l_val) or math.isnan(m))
+        else math.nan
+        for u, l_val, m in zip(up, lo, mid)
+    ]
+
+def _kernel_range_pct(p, close, high, low, open_, volume, ctx, name):
+    if name == "RANGE_PCT":
+        return [
+            (h - lo) / max(1e-12, c) * 100 for h, lo, c in zip(high, low, close)
+        ]
+    tr = Primitive("ATR", 1).evaluate(ctx)
+    return [t / max(1e-12, c) * 100 for t, c in zip(tr, close)]
+
+def _kernel_log_return(p, close, high, low, open_, volume, ctx, name):
+    out = [0.0]
+    for i in range(1, len(close)):
+        out.append(math.log(max(1e-12, close[i]) / max(1e-12, close[i - 1])))
+    return out
+
+def _kernel_cum_return(p, close, high, low, open_, volume, ctx, name):
+    base = max(1e-12, close[0])
+    return [c / base - 1 for c in close]
+
+def _kernel_ad_line(p, close, high, low, open_, volume, ctx, name):
+    mfv = [
+        (((c - lo) - (h - c)) / max(1e-12, h - lo)) * v
+        if h > lo
+        else 0.0
+        for h, lo, c, v in zip(high, low, close, volume)
+    ]
+    out = [0.0]
+    for v in mfv[1:]:
+        out.append(out[-1] + v)
+    return out
+
+def _kernel_ease_of_movement(p, close, high, low, open_, volume, ctx, name):
+    out = [0.0]
+    for i in range(1, len(close)):
+        dm = (high[i] + low[i]) / 2 - (high[i - 1] + low[i - 1]) / 2
+        br = (volume[i] / 10000) / max(1e-12, high[i] - low[i])
+        out.append(dm / max(1e-12, br))
+    return _rolling(out, p, lambda a: sum(a) / p)
+
+def _kernel_force_index(p, close, high, low, open_, volume, ctx, name):
+    fi = [0.0] + [
+        (close[i] - close[i - 1]) * volume[i] for i in range(1, len(close))
+    ]
+    return _ema(fi, p)
+
+def _kernel_volume_ratio(p, close, high, low, open_, volume, ctx, name):
+    sma_v = _rolling(volume, p, lambda a: sum(a) / p)
+    return [
+        v / max(1e-12, sv) if not math.isnan(sv) else math.nan
+        for v, sv in zip(volume, sma_v)
+    ]
+
+def _kernel_lag_1(p, close, high, low, open_, volume, ctx, name):
+    lag = int(name.split("_")[1])
+    return [math.nan] * lag + close[:-lag]
+
+def _kernel_delta_5(p, close, high, low, open_, volume, ctx, name):
+    lag = int(name.split("_")[1])
+    return [math.nan] * lag + [
+        close[i] - close[i - lag] for i in range(lag, len(close))
+    ]
+
+def _kernel_rolling_min(p, close, high, low, open_, volume, ctx, name):
+    if name == "ROLLING_MEAN":
+        return _rolling(close, p, lambda a: sum(a) / p)
+    if name == "ROLLING_STD":
+        return _rolling(
+            close,
+            p,
+            lambda a: math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p),
+        )
+    if name == "ROLLING_MIN":
+        return _rolling(close, p, min)
+    if name == "ROLLING_MAX":
+        return _rolling(close, p, max)
+    if name == "ROLLING_MEDIAN":
+        return _rolling(close, p, lambda a: sorted(a)[len(a) // 2])
+    if name == "ROLLING_SKEW":
+        return _rolling(close, p, _skew)
+    if name == "ROLLING_KURTOSIS":
+        return _rolling(close, p, _kurtosis)
+
+
+KERNELS = {
+    "EMA": _kernel_ema,
+    "SMA": _kernel_sma,
+    "WMA": _kernel_wma,
+    "HMA": _kernel_hma,
+    "HIGH": _kernel_high,
+    "HIGHEST_HIGH": _kernel_high,
+    "LOW": _kernel_low,
+    "LOWEST_LOW": _kernel_low,
+    "MOMENTUM": _kernel_momentum,
+    "ROC": _kernel_momentum,
+    "RSI": _kernel_rsi,
+    "ATR": _kernel_atr,
+    "TRUE_RANGE": _kernel_atr,
+    "VOLATILITY": _kernel_volatility,
+    "REALIZED_VOL": _kernel_volatility,
+    "BOLLINGER_BANDWIDTH": _kernel_bollinger_bandwidth,
+    "STOCHASTIC": _kernel_stochastic,
+    "WILLIAMS_R": _kernel_williams_r,
+    "CCI": _kernel_cci,
+    "OBV": _kernel_obv,
+    "DOLLAR_VOLUME": _kernel_dollar_volume,
+    "VOLUME_ZSCORE": _kernel_volume_zscore,
+    "VWAP": _kernel_vwap,
+    "MACD": _kernel_macd,
+    "DEMA": _kernel_dema,
+    "TEMA": _kernel_tema,
+    "DONCHIAN_UPPER": _kernel_donchian_upper,
+    "DONCHIAN_LOWER": _kernel_donchian_upper,
+    "DONCHIAN_MIDDLE": _kernel_donchian_upper,
+    "BB_MIDDLE": _kernel_bb_middle,
+    "BB_LOWER": _kernel_bb_middle,
+    "BB_PERCENT": _kernel_bb_middle,
+    "BB_UPPER": _kernel_bb_middle,
+    "PPO": _kernel_ppo,
+    "KAMA": _kernel_kama,
+    "ZLEMA": _kernel_zlema,
+    "TRIMA": _kernel_trima,
+    "PARKINSON_VOL": _kernel_parkinson_vol,
+    "GK_VOL": _kernel_gk_vol,
+    "CHAIKIN_MONEY_FLOW": _kernel_chaikin_money_flow,
+    "CMF": _kernel_chaikin_money_flow,
+    "MONEY_FLOW_INDEX": _kernel_money_flow_index,
+    "MFI": _kernel_money_flow_index,
+    "TRIX": _kernel_trix,
+    "TSI": _kernel_tsi,
+    "KST": _kernel_kst,
+    "CMO": _kernel_cmo,
+    "KELTNER_MIDDLE": _kernel_keltner_middle,
+    "KELTNER_UPPER": _kernel_keltner_middle,
+    "KELTNER_LOWER": _kernel_keltner_middle,
+    "BB_WIDTH": _kernel_bb_width,
+    "RANGE_PCT": _kernel_range_pct,
+    "TRUE_RANGE_PCT": _kernel_range_pct,
+    "LOG_RETURN": _kernel_log_return,
+    "CUM_RETURN": _kernel_cum_return,
+    "AD_LINE": _kernel_ad_line,
+    "EASE_OF_MOVEMENT": _kernel_ease_of_movement,
+    "FORCE_INDEX": _kernel_force_index,
+    "VOLUME_RATIO": _kernel_volume_ratio,
+    "LAG_1": _kernel_lag_1,
+    "LAG_2": _kernel_lag_1,
+    "LAG_5": _kernel_lag_1,
+    "DELTA_5": _kernel_delta_5,
+    "DELTA_1": _kernel_delta_5,
+    "ROLLING_MIN": _kernel_rolling_min,
+    "ROLLING_MEDIAN": _kernel_rolling_min,
+    "ROLLING_MAX": _kernel_rolling_min,
+    "ROLLING_SKEW": _kernel_rolling_min,
+    "ROLLING_MEAN": _kernel_rolling_min,
+    "ROLLING_KURTOSIS": _kernel_rolling_min,
+    "ROLLING_STD": _kernel_rolling_min,
+}
+
 @dataclass(frozen=True)
 class Primitive(Node):
     name: str
@@ -123,439 +670,9 @@ class Primitive(Node):
         low = ctx.columns.get("low", close)
         open_ = ctx.columns.get("open", close)
         volume = ctx.columns.get("volume", [1.0] * len(close))
-        if name == "EMA":
-            return _ema(close, p)
-        if name == "SMA":
-            return _rolling(close, p, lambda a: sum(a) / p)
-        if name == "WMA":
-            return _rolling(
-                close,
-                p,
-                lambda a: sum((i + 1) * v for i, v in enumerate(a)) / (p * (p + 1) / 2),
-            )
-        if name == "HMA":
-            half = max(2, p // 2)
-            root = max(2, int(math.sqrt(p)))
-            w1 = Primitive("WMA", half).evaluate(Context({"close": close}))
-            w2 = Primitive("WMA", p).evaluate(Context({"close": close}))
-            return Primitive("WMA", root).evaluate(
-                Context(
-                    {
-                        "close": [
-                            (
-                                2 * a - b
-                                if not (math.isnan(a) or math.isnan(b))
-                                else math.nan
-                            )
-                            for a, b in zip(w1, w2)
-                        ]
-                    }
-                )
-            )
-        if name in {"HIGH", "HIGHEST_HIGH"}:
-            return _rolling(high, p, max)
-        if name in {"LOW", "LOWEST_LOW"}:
-            return _rolling(low, p, min)
-        if name in {"MOMENTUM", "ROC"}:
-            out = [math.nan] * len(close)
-            for i in range(p, len(close)):
-                out[i] = (
-                    close[i] - close[i - p]
-                    if name == "MOMENTUM"
-                    else close[i] / close[i - p] - 1
-                )
-            return out
-        if name == "RSI":
-            out = [math.nan] * len(close)
-            for i in range(p, len(close)):
-                gains = [
-                    max(0, close[j] - close[j - 1]) for j in range(i - p + 1, i + 1)
-                ]
-                losses = [
-                    max(0, close[j - 1] - close[j]) for j in range(i - p + 1, i + 1)
-                ]
-                avg = sum(losses) / p
-                out[i] = 100.0 if avg == 0 else 100 - 100 / (1 + (sum(gains) / p) / avg)
-            return out
-        if name in {"ATR", "TRUE_RANGE"}:
-            tr = [0.0] + [
-                max(
-                    high[i] - low[i],
-                    abs(high[i] - close[i - 1]),
-                    abs(low[i] - close[i - 1]),
-                )
-                for i in range(1, len(close))
-            ]
-            return _rolling(tr, p, lambda a: sum(a) / p)
-        if name in {"REALIZED_VOL", "VOLATILITY"}:
-            rets = [0.0] + [close[i] / close[i - 1] - 1 for i in range(1, len(close))]
-            return _rolling(
-                rets,
-                p,
-                lambda a: math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p)
-                * math.sqrt(252),
-            )
-        if name == "BOLLINGER_BANDWIDTH":
-            sma = Primitive("SMA", p).evaluate(ctx)
-            sd = _rolling(
-                close, p, lambda a: math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p)
-            )
-            return [
-                math.nan if math.isnan(m) else 4 * s / m if m else math.nan
-                for m, s in zip(sma, sd)
-            ]
-        if name == "STOCHASTIC":
-            hh = Primitive("HIGHEST_HIGH", p).evaluate(ctx)
-            ll = Primitive("LOWEST_LOW", p).evaluate(ctx)
-            return [
-                (
-                    math.nan
-                    if math.isnan(a) or math.isnan(b) or a == b
-                    else (c - b) / (a - b) * 100
-                )
-                for a, b, c in zip(hh, ll, close)
-            ]
-        if name == "WILLIAMS_R":
-            return [
-                v - 100 if not math.isnan(v) else v
-                for v in Primitive("STOCHASTIC", p).evaluate(ctx)
-            ]
-        if name == "CCI":
-            typical = [(a + b + c) / 3 for a, b, c in zip(high, low, close)]
-            sma = _rolling(typical, p, lambda a: sum(a) / p)
-            return [
-                (
-                    math.nan
-                    if math.isnan(m)
-                    else (
-                        (t - m)
-                        / (
-                            0.015
-                            * sum(
-                                abs(v - m) for v in typical[max(0, i - p + 1) : i + 1]
-                            )
-                            / p
-                        )
-                        if sum(abs(v - m) for v in typical[max(0, i - p + 1) : i + 1])
-                        else 0
-                    )
-                )
-                for i, (t, m) in enumerate(zip(typical, sma))
-            ]
-        if name == "OBV":
-            out = [0.0]
-            for i in range(1, len(close)):
-                out.append(
-                    out[-1]
-                    + (
-                        volume[i]
-                        if close[i] > close[i - 1]
-                        else -volume[i] if close[i] < close[i - 1] else 0
-                    )
-                )
-            return out
-        if name == "DOLLAR_VOLUME":
-            return [a * b for a, b in zip(close, volume)]
-        if name == "VOLUME_ZSCORE":
-            return _rolling(
-                volume,
-                p,
-                lambda a: (a[-1] - sum(a) / p)
-                / (math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p) or 1),
-            )
-        if name == "VWAP":
-            pv = []
-            vv = []
-            for h, lo, c, v in zip(high, low, close, volume):
-                pv.append((h + lo + c) / 3 * v)
-                vv.append(v)
-            return [
-                (
-                    sum(pv[max(0, i - p + 1) : i + 1])
-                    / max(1, sum(vv[max(0, i - p + 1) : i + 1]))
-                    if i >= p - 1
-                    else math.nan
-                )
-                for i in range(len(close))
-            ]
-        if name == "MACD":
-            fast = _ema(close, max(2, p // 2))
-            slow = _ema(close, p)
-            return [a - b for a, b in zip(fast, slow)]
-        if name == "DEMA":
-            first = _ema(close, p)
-            second = _ema(first, p)
-            return [2 * a - b for a, b in zip(first, second)]
-        if name == "TEMA":
-            first = _ema(close, p)
-            second = _ema(first, p)
-            third = _ema(second, p)
-            return [3 * a - 3 * b + c for a, b, c in zip(first, second, third)]
-        if name in {"DONCHIAN_UPPER", "DONCHIAN_LOWER", "DONCHIAN_MIDDLE"}:
-            upper = _rolling(high, p, max)
-            lower = _rolling(low, p, min)
-            return (
-                upper
-                if name.endswith("UPPER")
-                else (
-                    lower
-                    if name.endswith("LOWER")
-                    else [
-                        (
-                            (a + b) / 2
-                            if not math.isnan(a) and not math.isnan(b)
-                            else math.nan
-                        )
-                        for a, b in zip(upper, lower)
-                    ]
-                )
-            )
-        if name in {"BB_UPPER", "BB_LOWER", "BB_MIDDLE", "BB_PERCENT"}:
-            middle = Primitive("SMA", p).evaluate(ctx)
-            sd = _rolling(
-                close, p, lambda a: math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p)
-            )
-            upper = [
-                m + 2 * s if not math.isnan(m) else math.nan for m, s in zip(middle, sd)
-            ]
-            lower = [
-                m - 2 * s if not math.isnan(m) else math.nan for m, s in zip(middle, sd)
-            ]
-            return (
-                upper
-                if name == "BB_UPPER"
-                else (
-                    lower
-                    if name == "BB_LOWER"
-                    else (
-                        middle
-                        if name == "BB_MIDDLE"
-                        else [
-                            (
-                                math.nan
-                                if math.isnan(u) or math.isnan(lo) or u == lo
-                                else (c - lo) / (u - lo)
-                            )
-                            for c, u, lo in zip(close, upper, lower)
-                        ]
-                    )
-                )
-            )
-        if name == "PPO":
-            fast = _ema(close, max(2, p // 2))
-            slow = _ema(close, p)
-            return [(a - b) / b if b else math.nan for a, b in zip(fast, slow)]
-        if name == "KAMA":
-            return _kama(close, p)
-        if name == "ZLEMA":
-            return _zlema(close, p)
-        if name == "TRIMA":
-            half = max(2, (p + 1) // 2)
-            first = Primitive("SMA", half).evaluate(ctx)
-            return Primitive("SMA", half).evaluate(
-                Context({"close": [(0.0 if math.isnan(v) else v) for v in first]})
-            )
-        if name == "PARKINSON_VOL":
-            hl = [
-                (math.log(max(1e-12, h) / max(1e-12, lo)) ** 2) / (4 * math.log(2))
-                for h, lo in zip(high, low)
-            ]
-            return _rolling(
-                hl, p, lambda a: math.sqrt(max(0.0, sum(a) / p)) * math.sqrt(252)
-            )
-        if name == "GK_VOL":
-            gk = [
-                0.5 * (math.log(max(1e-12, h) / max(1e-12, lo)) ** 2)
-                - (2 * math.log(2) - 1)
-                * (math.log(max(1e-12, c) / max(1e-12, o)) ** 2)
-                for o, h, lo, c in zip(open_, high, low, close)
-            ]
-            return _rolling(
-                gk, p, lambda a: math.sqrt(max(0.0, sum(a) / p)) * math.sqrt(252)
-            )
-        if name in {"CHAIKIN_MONEY_FLOW", "CMF"}:
-            mfv = [
-                (((c - lo) - (h - c)) / max(1e-12, h - lo)) * v
-                if h > lo
-                else 0.0
-                for h, lo, c, v in zip(high, low, close, volume)
-            ]
-            vol_sum = _rolling(volume, p, sum)
-            mfv_sum = _rolling(mfv, p, sum)
-            return [
-                m / max(1e-12, vs)
-                if not (math.isnan(m) or math.isnan(vs))
-                else math.nan
-                for m, vs in zip(mfv_sum, vol_sum)
-            ]
-        if name in {"MONEY_FLOW_INDEX", "MFI"}:
-            tp = [(h + lo + c) / 3 for h, lo, c in zip(high, low, close)]
-            pos = [0.0] * len(tp)
-            neg = [0.0] * len(tp)
-            for i in range(1, len(tp)):
-                if tp[i] > tp[i - 1]:
-                    pos[i] = tp[i] * volume[i]
-                elif tp[i] < tp[i - 1]:
-                    neg[i] = tp[i] * volume[i]
-            pos_sum = _rolling(pos, p, sum)
-            neg_sum = _rolling(neg, p, sum)
-            return [
-                (
-                    100.0
-                    if ns == 0
-                    else 100 - 100 / (1 + ps / ns)
-                    if not (math.isnan(ps) or math.isnan(ns))
-                    else math.nan
-                )
-                for ps, ns in zip(pos_sum, neg_sum)
-            ]
-        if name == "TRIX":
-            e1 = _ema(close, p)
-            e2 = _ema(e1, p)
-            e3 = _ema(e2, p)
-            out = [math.nan] * len(close)
-            for i in range(1, len(close)):
-                out[i] = (
-                    (e3[i] - e3[i - 1]) / e3[i - 1] * 100 if e3[i - 1] else 0.0
-                )
-            return out
-        if name == "TSI":
-            mom = [0.0] + [close[i] - close[i - 1] for i in range(1, len(close))]
-            r = max(2, p)
-            s = max(2, p // 2)
-            em1 = _ema(mom, r)
-            em2 = _ema(em1, s)
-            absm1 = _ema([abs(x) for x in mom], r)
-            absm2 = _ema(absm1, s)
-            return [
-                100 * m / max(1e-12, a)
-                if not (math.isnan(m) or math.isnan(a))
-                else math.nan
-                for m, a in zip(em2, absm2)
-            ]
-        if name == "KST":
-            r1 = _rolling(
-                close, max(2, p // 2), lambda a: (a[-1] - a[0]) / max(1e-12, a[0])
-            )
-            r2 = _rolling(close, p, lambda a: (a[-1] - a[0]) / max(1e-12, a[0]))
-            r3 = _rolling(
-                close, int(p * 1.5), lambda a: (a[-1] - a[0]) / max(1e-12, a[0])
-            )
-            r4 = _rolling(close, p * 2, lambda a: (a[-1] - a[0]) / max(1e-12, a[0]))
-            sr1 = _ema([(0.0 if math.isnan(v) else v) for v in r1], max(2, p // 2))
-            sr2 = _ema([(0.0 if math.isnan(v) else v) for v in r2], max(2, p // 2))
-            sr3 = _ema([(0.0 if math.isnan(v) else v) for v in r3], max(2, p // 2))
-            sr4 = _ema([(0.0 if math.isnan(v) else v) for v in r4], p)
-            return [a + 2 * b + 3 * c + 4 * d for a, b, c, d in zip(sr1, sr2, sr3, sr4)]
-        if name == "CMO":
-            out = [math.nan] * len(close)
-            for i in range(p, len(close)):
-                gains = sum(
-                    max(0, close[j] - close[j - 1]) for j in range(i - p + 1, i + 1)
-                )
-                losses = sum(
-                    max(0, close[j - 1] - close[j]) for j in range(i - p + 1, i + 1)
-                )
-                denom = gains + losses
-                out[i] = 100 * (gains - losses) / denom if denom else 0.0
-            return out
-        if name in {"KELTNER_UPPER", "KELTNER_LOWER", "KELTNER_MIDDLE"}:
-            mid = _ema(close, p)
-            tr = Primitive("ATR", p).evaluate(ctx)
-            if name.endswith("UPPER"):
-                return [m + 2 * t for m, t in zip(mid, tr)]
-            if name.endswith("LOWER"):
-                return [m - 2 * t for m, t in zip(mid, tr)]
-            return mid
-        if name == "BB_WIDTH":
-            up = Primitive("BB_UPPER", p).evaluate(ctx)
-            lo = Primitive("BB_LOWER", p).evaluate(ctx)
-            mid = Primitive("BB_MIDDLE", p).evaluate(ctx)
-            return [
-                (u - l_val) / max(1e-12, m) * 100
-                if not (math.isnan(u) or math.isnan(l_val) or math.isnan(m))
-                else math.nan
-                for u, l_val, m in zip(up, lo, mid)
-            ]
-        if name in {"RANGE_PCT", "TRUE_RANGE_PCT"}:
-            if name == "RANGE_PCT":
-                return [
-                    (h - lo) / max(1e-12, c) * 100 for h, lo, c in zip(high, low, close)
-                ]
-            tr = Primitive("ATR", 1).evaluate(ctx)
-            return [t / max(1e-12, c) * 100 for t, c in zip(tr, close)]
-        if name == "LOG_RETURN":
-            out = [0.0]
-            for i in range(1, len(close)):
-                out.append(math.log(max(1e-12, close[i]) / max(1e-12, close[i - 1])))
-            return out
-        if name == "CUM_RETURN":
-            base = max(1e-12, close[0])
-            return [c / base - 1 for c in close]
-        if name == "AD_LINE":
-            mfv = [
-                (((c - lo) - (h - c)) / max(1e-12, h - lo)) * v
-                if h > lo
-                else 0.0
-                for h, lo, c, v in zip(high, low, close, volume)
-            ]
-            out = [0.0]
-            for v in mfv[1:]:
-                out.append(out[-1] + v)
-            return out
-        if name == "EASE_OF_MOVEMENT":
-            out = [0.0]
-            for i in range(1, len(close)):
-                dm = (high[i] + low[i]) / 2 - (high[i - 1] + low[i - 1]) / 2
-                br = (volume[i] / 10000) / max(1e-12, high[i] - low[i])
-                out.append(dm / max(1e-12, br))
-            return _rolling(out, p, lambda a: sum(a) / p)
-        if name == "FORCE_INDEX":
-            fi = [0.0] + [
-                (close[i] - close[i - 1]) * volume[i] for i in range(1, len(close))
-            ]
-            return _ema(fi, p)
-        if name == "VOLUME_RATIO":
-            sma_v = _rolling(volume, p, lambda a: sum(a) / p)
-            return [
-                v / max(1e-12, sv) if not math.isnan(sv) else math.nan
-                for v, sv in zip(volume, sma_v)
-            ]
-        if name in {"LAG_1", "LAG_2", "LAG_5"}:
-            lag = int(name.split("_")[1])
-            return [math.nan] * lag + close[:-lag]
-        if name in {"DELTA_1", "DELTA_5"}:
-            lag = int(name.split("_")[1])
-            return [math.nan] * lag + [
-                close[i] - close[i - lag] for i in range(lag, len(close))
-            ]
-        if name in {
-            "ROLLING_MEAN",
-            "ROLLING_STD",
-            "ROLLING_MIN",
-            "ROLLING_MAX",
-            "ROLLING_MEDIAN",
-            "ROLLING_SKEW",
-            "ROLLING_KURTOSIS",
-        }:
-            if name == "ROLLING_MEAN":
-                return _rolling(close, p, lambda a: sum(a) / p)
-            if name == "ROLLING_STD":
-                return _rolling(
-                    close,
-                    p,
-                    lambda a: math.sqrt(sum((v - sum(a) / p) ** 2 for v in a) / p),
-                )
-            if name == "ROLLING_MIN":
-                return _rolling(close, p, min)
-            if name == "ROLLING_MAX":
-                return _rolling(close, p, max)
-            if name == "ROLLING_MEDIAN":
-                return _rolling(close, p, lambda a: sorted(a)[len(a) // 2])
-            if name == "ROLLING_SKEW":
-                return _rolling(close, p, _skew)
-            if name == "ROLLING_KURTOSIS":
-                return _rolling(close, p, _kurtosis)
+
+        if name in KERNELS:
+            return KERNELS[name](p, close, high, low, open_, volume, ctx, name)
         # Registered experimental primitives use a safe, causal rolling transform
         # until a specialized kernel is supplied. They remain callable and
         # explicitly discoverable rather than silently being omitted from search.
@@ -581,6 +698,7 @@ class Primitive(Node):
                 return _rolling(volume, p, lambda a: sum(a) / p)
             return _rolling(close, p, lambda a: a[-1] - a[0])
         raise ValueError(f"Unknown primitive: {self.name}")
+
 
     def complexity(self):
         return 1

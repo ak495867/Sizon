@@ -27,28 +27,7 @@ class EnsembleResult:
     members: list[EnsembleMember]
 
 
-def _mean(values: list[float]) -> float:
-    return sum(values) / max(1, len(values))
-
-
-def _std(values: list[float], mean_val: float | None = None) -> float:
-    if len(values) < 2:
-        return 0.0
-    m = _mean(values) if mean_val is None else mean_val
-    var = sum((x - m) ** 2 for x in values) / (len(values) - 1)
-    return math.sqrt(max(0.0, var))
-
-
-def _correlation(x: list[float], y: list[float]) -> float:
-    n = min(len(x), len(y))
-    if n < 2:
-        return 0.0
-    mx, my = _mean(x[:n]), _mean(y[:n])
-    sx, sy = _std(x[:n], mx), _std(y[:n], my)
-    if sx == 0.0 or sy == 0.0:
-        return 0.0
-    cov = sum((x[i] - mx) * (y[i] - my) for i in range(n)) / (n - 1)
-    return max(-1.0, min(1.0, cov / (sx * sy)))
+from sizon.research._math_utils import _mean, _std, _correlation, _clean_pairs
 
 
 def _covariance_matrix(matrix: list[list[float]]) -> list[list[float]]:

@@ -4,6 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import json
 import logging
+import threading
 import urllib.request
 
 
@@ -31,10 +32,15 @@ class LogSink(AlertSink):
 
 
 class WebhookSink(AlertSink):
-    def __init__(self, url):
+    def __init__(self, url: str, timeout: float = 5.0):
         self.url = url
+        self.timeout = timeout
 
-    def send(self, alert):
+    def send(self, alert: Alert) -> None:
+        """Dispatch webhook in background thread to avoid blocking the trading loop."""
+        threading.Thread(target=self._post, args=(alert,), daemon=True).start()
+
+    def _post(self, alert: Alert) -> None:
         body = json.dumps(
             {
                 "level": alert.level,
@@ -49,7 +55,10 @@ class WebhookSink(AlertSink):
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        return urllib.request.urlopen(req, timeout=5).status
+        try:
+            urllib.request.urlopen(req, timeout=self.timeout)
+        except Exception as exc:
+            logging.getLogger('sizon.alerts').warning('Webhook delivery failed: %s', exc)
 
 
 class AlertRouter:

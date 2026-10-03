@@ -55,17 +55,19 @@ def test_security_alerts_soak_and_readiness():
     assert SoakRunner().gate(result)
     checklist = ReadinessChecklist()
     assert not checklist.complete()
-    assert not DeploymentGate().authorize if False else True
+    gate = DeploymentGate()
+    try:
+        gate.authorize(1)
+        assert False, "should have raised PermissionError"
+    except PermissionError:
+        pass
 
 
 def test_reference_fixture_and_live_broker_fail_closed():
+    import pytest
     assert validate_cases([fixture_constant_returns()])["passed"]
     broker = HttpBrokerAdapter(
         BrokerConfig("test", "https://example.invalid", "acct", "live")
     )
-    try:
+    with pytest.raises(PermissionError):
         broker.submit({"symbol": "A"})
-    except PermissionError:
-        assert True
-    else:
-        assert False

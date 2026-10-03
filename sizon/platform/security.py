@@ -31,15 +31,20 @@ class AuditEvent:
 
 
 class AuditLog:
-    def __init__(self):
-        self.events = []
+    def __init__(self, max_events: int = 10000):
+        self.events: list[dict] = []
+        self.max_events = max_events
 
-    def append(self, actor, action, details):
+    def append(self, actor: str, action: str, details: dict) -> str:
         previous = self.events[-1]["hash"] if self.events else ""
         event = AuditEvent(time.time(), actor, action, details, previous)
         payload = json.dumps(asdict(event), sort_keys=True)
         digest = sha256(payload.encode()).hexdigest()
         self.events.append({"event": asdict(event), "hash": digest})
+        if len(self.events) > self.max_events:
+            # Trim oldest 10% but preserve chain integrity
+            trim = max(1, self.max_events // 10)
+            self.events = self.events[trim:]
         return digest
 
     def verify(self):
@@ -60,12 +65,20 @@ class Incident:
 
 
 class IncidentManager:
-    def __init__(self):
-        self.incidents = []
+    def __init__(self, max_incidents: int = 1000):
+        self.incidents: list[Incident] = []
+        self.max_incidents = max_incidents
 
-    def open(self, severity, title, details=None):
+    def open(self, severity: str, title: str, details: dict | None = None) -> Incident:
         incident = Incident(severity, title, details or {})
         self.incidents.append(incident)
+        if len(self.incidents) > self.max_incidents:
+            # Remove oldest resolved incidents first, then oldest open
+            resolved = [i for i in self.incidents if i.status == 'resolved']
+            if resolved:
+                self.incidents.remove(resolved[0])
+            else:
+                self.incidents.pop(0)
         return incident
 
     def resolve(self, title):

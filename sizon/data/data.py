@@ -128,10 +128,16 @@ class DataFeed:
     def column(self, name: str) -> list[float]:
         return [float(r[name]) for r in self.rows]
 
-    def split(self, fraction: float = 0.7) -> tuple["DataFeed", "DataFeed"]:
-        cut = max(1, min(len(self.rows) - 1, int(len(self.rows) * fraction)))
-        return DataFeed(self.rows[:cut], self.source, self.timezone), DataFeed(
-            self.rows[cut:], self.source, self.timezone
+    def split(self, test_fraction: float = 0.2) -> tuple['DataFeed', 'DataFeed']:
+        """Split into train/test by chronological order. Always sorts by timestamp first."""
+        if not self.rows:
+            return DataFeed([], self.source, self.timezone), DataFeed([], self.source, self.timezone)
+        sorted_rows = sorted(self.rows, key=lambda r: str(r.get('timestamp', '')))
+        n = len(sorted_rows)
+        split_idx = max(1, int(n * (1 - test_fraction)))
+        return (
+            DataFeed(sorted_rows[:split_idx], self.source, self.timezone),
+            DataFeed(sorted_rows[split_idx:], self.source, self.timezone),
         )
 
     def manifest(self) -> dict:

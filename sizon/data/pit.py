@@ -40,16 +40,19 @@ class PointInTimeDataset:
 
     def apply_actions(self, rows=None):
         out = [dict(r) for r in (rows or self.visible_rows())]
-        for action in self.actions or []:
+        # Apply actions in reverse chronological order (newest first) for correct backward adjustment
+        sorted_actions = sorted(self.actions or [], key=lambda a: a.effective_at, reverse=True)
+        for action in sorted_actions:
             for row in out:
                 if (
                     row.get("symbol") == action.symbol
                     and row.get("timestamp", "") < action.effective_at
                 ):
                     for key in ("open", "high", "low", "close"):
-                        row[key] = (
-                            float(row[key]) * action.split_factor - action.cash_dividend
-                        )
+                        if key in row and action.split_factor and action.split_factor != 0:
+                            row[key] = float(row[key]) / action.split_factor
+                        if key in row and action.cash_dividend:
+                            row[key] = float(row[key]) - action.cash_dividend
         return out
 
     def manifest(self):
@@ -62,7 +65,7 @@ class PointInTimeDataset:
         }
 
 
-class ConnectorRegistry:
+class ConnectorRegistry:  # noqa: F811
     def __init__(self):
         self._connectors = {}
 

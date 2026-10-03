@@ -15,10 +15,14 @@ class BrokerAdapter:
 @dataclass
 class ShadowMode:
     broker: BrokerAdapter | None = None
+    max_decisions: int = 10000
     decisions: list[dict] = field(default_factory=list)
 
     def record(self, signal, market):
-        self.decisions.append({"signal": signal, "market": market, "would_trade": True})
+        decision = {"signal": signal, "market": market, "would_trade": True}
+        self.decisions.append(decision)
+        if len(self.decisions) > self.max_decisions:
+            self.decisions = self.decisions[-self.max_decisions:]
         return self.decisions[-1]
 
 
@@ -40,11 +44,14 @@ class KillSwitch:
 
 
 class SimulatedBroker(BrokerAdapter):
-    def __init__(self):
-        self.orders = []
+    def __init__(self, max_orders: int = 10000):
+        self.orders: list = []
+        self.max_orders = max_orders
 
     def submit(self, order):
         self.orders.append(order)
+        if len(self.orders) > self.max_orders:
+            self.orders = self.orders[-self.max_orders:]
         return {"status": "simulated", "order": order}
 
     def cancel_all(self):

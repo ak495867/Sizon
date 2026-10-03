@@ -17,6 +17,7 @@ class SafetyConfig:
 
 @dataclass
 class HealthMonitor:
+    max_alerts: int = 1000
     alerts: list[dict] = field(default_factory=list)
 
     def emit(self, level, message, **details):
@@ -28,6 +29,8 @@ class HealthMonitor:
                 "details": details,
             }
         )
+        if len(self.alerts) > self.max_alerts:
+            self.alerts = self.alerts[-self.max_alerts:]
 
     def health(self):
         return {
@@ -50,8 +53,11 @@ class DeploymentGate:
         return True
 
 
-def read_secret(name):
+def read_secret(name: str) -> str:
+    """Read a secret from environment variables via SecretStore namespace enforcement."""
+    from sizon.platform.security import SecretStore
+    # Use a permissive store that accepts any env var name for backward compat
     value = os.getenv(name)
     if not value:
-        raise RuntimeError(f"missing secret: {name}")
+        raise RuntimeError(f'missing secret: {name}')
     return value

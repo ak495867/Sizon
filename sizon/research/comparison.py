@@ -4,16 +4,25 @@ from __future__ import annotations
 
 
 def robustness_score(record):
-    record.get("test_metrics", {})
-    robust = record.get("robustness", {})
-    cost = robust.get("cost_sensitivity", {}).get("scenarios", [])
-    param = robust.get("parameter_sensitivity", {}).get("scenarios", [])
-    mc = (
-        robust.get("monte_carlo", {})
-        .get("quantiles", {})
-        .get("total_return", {})
-        .get("p05", 0)
-    )
+    """
+    Calculate a robustness score (0-100) based on:
+    - 50%: Survival rate under increased transaction costs.
+    - 30%: Stability under parameter perturbation.
+    - 20%: 5th percentile Monte Carlo return being above -1 (i.e. not ruined).
+    """
+    robust = record.get("robustness") or {}
+    
+    cost_data = robust.get("cost_sensitivity") or {}
+    cost = cost_data.get("scenarios") or []
+    
+    param_data = robust.get("parameter_sensitivity") or {}
+    param = param_data.get("scenarios") or []
+    
+    mc_data = robust.get("monte_carlo") or {}
+    quantiles = mc_data.get("quantiles") or {}
+    total_return_q = quantiles.get("total_return") or {}
+    mc = total_return_q.get("p05", 0)
+
     cost_survival = sum(s.get("metrics", {}).get("sharpe", 0) > 0 for s in cost) / max(
         1, len(cost)
     )

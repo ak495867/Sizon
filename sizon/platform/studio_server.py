@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import urllib.parse
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -65,7 +66,8 @@ class StudioHandler(SimpleHTTPRequestHandler):
                                     "report_url": rep_url,
                                 }
                             )
-                        except Exception:
+                        except Exception as exc:
+                            logging.getLogger('sizon.studio').debug('Failed to parse run %s: %s', p.name, exc)
                             continue
             self._send_json(runs)
             return
@@ -75,8 +77,15 @@ class StudioHandler(SimpleHTTPRequestHandler):
             if len(parts) >= 3:
                 run_id = parts[2]
                 sub = parts[3] if len(parts) > 3 else "summary"
+                # Security: prevent path traversal
                 for r_dir in [self.runs_dir, Path(".")]:
-                    target = r_dir / run_id
+                    try:
+                        target = (r_dir / run_id).resolve()
+                        r_dir_resolved = r_dir.resolve()
+                        target.relative_to(r_dir_resolved)  # raises ValueError if outside
+                    except ValueError:
+                        self._send_json({"error": "invalid run_id"}, status=400)
+                        return
                     if target.is_dir() and (target / "summary.json").exists():
                         try:
                             if sub == "pareto":
@@ -163,6 +172,6 @@ class StudioHandler(SimpleHTTPRequestHandler):
 
 
 def serve(directory="runs", host="127.0.0.1", port=8765):
-    directory = str(Path(directory).resolve())
-    os.chdir(directory)
+    resolved = Path(directory).resolve()
+    StudioHandler.runs_dir = resolved
     return ThreadingHTTPServer((host, port), StudioHandler)

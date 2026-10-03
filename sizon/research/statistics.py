@@ -5,8 +5,19 @@ import math
 import random
 
 
-def bootstrap_mean(values, simulations=1000, seed=7):
+def _median(values: list) -> float:
+    s = sorted(values)
+    n = len(s)
+    if n == 0:
+        return 0.0
+    mid = n // 2
+    return s[mid] if n % 2 else (s[mid - 1] + s[mid]) / 2.0
+
+
+def bootstrap_mean(values: list[float], simulations: int = 1000, seed: int = 7) -> dict:
     values = list(values)
+    if not values:
+        return {}
     rng = random.Random(seed)
     means = []
     for _ in range(simulations):
@@ -21,8 +32,8 @@ def bootstrap_mean(values, simulations=1000, seed=7):
 
 
 def deflated_sharpe_ratio(
-    observed_sharpe, trials, observations, skew=0.0, kurtosis=3.0
-):
+    observed_sharpe: float, trials: int, observations: int, skew: float = 0.0, kurtosis: float = 3.0
+) -> dict:
     penalty = math.sqrt(2 * math.log(max(1, trials))) / math.sqrt(max(1, observations))
     return {
         "observed_sharpe": observed_sharpe,
@@ -33,10 +44,10 @@ def deflated_sharpe_ratio(
     }
 
 
-def probability_of_backtest_overfitting(sharpes):
+def probability_of_backtest_overfitting(sharpes: list[float]) -> dict:
     sharpes = list(sharpes)
     ifrom = max(sharpes) if sharpes else 0
-    median = sorted(sharpes)[len(sharpes) // 2] if sharpes else 0
+    median = _median(sharpes)
     return {
         "trials": len(sharpes),
         "best_sharpe": ifrom,
@@ -46,7 +57,7 @@ def probability_of_backtest_overfitting(sharpes):
     }
 
 
-def multiple_testing_adjust(pvalues, method="bonferroni"):
+def multiple_testing_adjust(pvalues: list[float], method: str = "bonferroni") -> list[float]:
     pvalues = list(pvalues)
     n = len(pvalues)
     return (
@@ -56,7 +67,7 @@ def multiple_testing_adjust(pvalues, method="bonferroni"):
     )
 
 
-def white_reality_check(returns_matrix, simulations=500, seed=7):
+def white_reality_check(returns_matrix: list[list[float]], simulations: int = 500, seed: int = 7) -> dict:
     matrix = [list(x) for x in returns_matrix]
     best = max((sum(x) / max(1, len(x)) for x in matrix), default=0)
     rng = random.Random(seed)
@@ -75,13 +86,15 @@ def white_reality_check(returns_matrix, simulations=500, seed=7):
     }
 
 
-def spa_test(returns_matrix, simulations=500, seed=7):
+def spa_test(returns_matrix: list[list[float]], simulations: int = 500, seed: int = 7) -> dict:
     result = white_reality_check(returns_matrix, simulations, seed)
     result["method"] = "superior_predictive_ability"
     return result
 
 
-def regime_labels(returns, window=20):
+def regime_labels(returns: list[float], window: int = 20) -> list[str]:
+    if not returns:
+        return []
     out = []
     for i in range(len(returns)):
         chunk = returns[max(0, i - window + 1) : i + 1]

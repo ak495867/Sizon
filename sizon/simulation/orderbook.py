@@ -23,6 +23,8 @@ class OrderBookSnapshot:
 
     @property
     def mid(self):
+        if not self.bids or not self.asks:
+            raise ValueError('empty order book')
         return (self.bids[0].price + self.asks[0].price) / 2
 
 
@@ -99,10 +101,12 @@ def execute_market(
             break
     if not filled:
         return Fill(0, 0, 0, 0, "unfilled")
-    impact = curve.cost_bps(filled, available) / 10000
-    price = (
-        notional / filled * (1 + impact if order_side.lower() == "buy" else 1 - impact)
-    )
+        
+    price = notional / filled
+    if remaining > 0:
+        impact = curve.cost_bps(filled, available) / 10000
+        price = price * (1 + impact if order_side.lower() == "buy" else 1 - impact)
+
     return Fill(
         filled,
         price,

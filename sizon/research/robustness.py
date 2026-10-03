@@ -80,14 +80,22 @@ def monte_carlo_returns(
         shuffled = list(source)
         rng.shuffle(shuffled)
         equity = 1.0
+        peak = 1.0
+        worst_dd = 0.0
+        running_eq = 1.0
         for r in shuffled:
-            equity *= 1 + r
+            running_eq *= 1 + r
+            peak = max(peak, running_eq)
+            worst_dd = min(worst_dd, running_eq / peak - 1)
+        max_dd = abs(worst_dd)
+        equity = running_eq
         mean = sum(shuffled) / len(shuffled)
         var = sum((x - mean) ** 2 for x in shuffled) / max(1, len(shuffled) - 1)
         samples.append(
             {
                 "total_return": equity - 1,
                 "sharpe": math.sqrt(252) * mean / math.sqrt(var) if var else 0.0,
+                "max_drawdown": max_dd,
             }
         )
 
@@ -109,6 +117,11 @@ def monte_carlo_returns(
                 "p05": q("sharpe", 0.05),
                 "p50": q("sharpe", 0.5),
                 "p95": q("sharpe", 0.95),
+            },
+            "max_drawdown": {
+                "p05": q("max_drawdown", 0.05),
+                "p50": q("max_drawdown", 0.5),
+                "p95": q("max_drawdown", 0.95),
             },
         },
     }

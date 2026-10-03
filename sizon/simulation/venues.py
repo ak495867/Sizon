@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from decimal import Decimal, ROUND_DOWN
-
+import math
 
 @dataclass(frozen=True)
 class VenueRules:
@@ -16,21 +15,19 @@ class VenueRules:
     maintenance_margin: float
     max_order_notional: float
 
-    def round_price(self, price):
-        return float(
-            (Decimal(str(price)) / Decimal(str(self.tick_size))).quantize(
-                Decimal("1"), rounding=ROUND_DOWN
-            )
-            * Decimal(str(self.tick_size))
-        )
+    def round_price(self, price: float) -> float:
+        if not self.tick_size:
+            return price
+        rounded = round(price / self.tick_size) * self.tick_size
+        decimals = max(0, -int(math.floor(math.log10(self.tick_size)))) if self.tick_size < 1 else 0
+        return round(rounded, decimals)
 
-    def round_quantity(self, quantity):
-        return float(
-            (Decimal(str(quantity)) / Decimal(str(self.lot_size))).quantize(
-                Decimal("1"), rounding=ROUND_DOWN
-            )
-            * Decimal(str(self.lot_size))
-        )
+    def round_quantity(self, quantity: float) -> float:
+        if not self.lot_size:
+            return quantity
+        rounded = math.floor(quantity / self.lot_size) * self.lot_size
+        decimals = max(0, -int(math.floor(math.log10(self.lot_size)))) if self.lot_size < 1 else 0
+        return round(rounded, decimals)
 
     def margin_required(self, notional):
         return abs(notional) * self.initial_margin

@@ -29,17 +29,20 @@ class PaperOrder:
 
 
 class PaperBroker:
-    def __init__(self):
-        self.orders = []
-        self.enabled = False
+    def __init__(self, max_orders: int = 10000):
+        self.orders: list[PaperOrder] = []
+        self.max_orders = max_orders
+        self.enabled: bool = False
 
     def enable(self, explicit=True):
         self.enabled = bool(explicit)
 
-    def submit(self, order: PaperOrder):
+    def submit(self, order: PaperOrder) -> dict:
         if not self.enabled:
             raise PermissionError("paper broker is disabled; enable explicitly")
         self.orders.append(order)
+        if len(self.orders) > self.max_orders:
+            self.orders = self.orders[-self.max_orders:]
         return {"status": "paper_submitted", "order": order.__dict__}
 
     def cancel_all(self):

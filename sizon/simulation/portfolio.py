@@ -42,11 +42,15 @@ class PortfolioState:
 
 
 def round_tick(price: float, tick_size: float) -> float:
-    return round(price / tick_size) * tick_size if tick_size else price
+    if not tick_size:
+        return price
+    return round(round(price / tick_size) * tick_size, 10)
 
 
 def validate_order(order: Order, price: float, config: PortfolioConfig) -> list[str]:
     errors = []
+    if order.quantity <= 0:
+        errors.append("invalid_quantity")
     if order.quantity < config.min_order_size:
         errors.append("below_minimum_order_size")
     if order.order_type == "limit" and order.limit_price is None:
@@ -65,6 +69,15 @@ def execute_order(
     if errors:
         order.status = "rejected"
         return order
+        
+    if order.order_type == "limit" and order.limit_price is not None:
+        if order.side.lower() == "buy" and market_price > order.limit_price + 1e-9:
+            order.status = "pending"
+            return order
+        if order.side.lower() == "sell" and market_price < order.limit_price - 1e-9:
+            order.status = "pending"
+            return order
+            
     fill = min(abs(order.quantity), max(0, liquidity))
     order.filled_quantity = fill
     order.fill_price = round_tick(
@@ -85,6 +98,7 @@ def apply_risk_limits(
     if equity <= 0:
         return 0.0
     max_units = equity * config.max_position_pct * config.leverage / max(price, 1e-12)
+    max_units = min(max_units, 1e9)
     return max(-max_units, min(max_units, target_position))
 
 

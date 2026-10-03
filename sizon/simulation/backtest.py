@@ -28,7 +28,9 @@ class BacktestResult:
     @property
     def sortino(self):
         r = self.returns[1:]
-        down = [min(0, x) for x in r]
+        down = [x for x in r if x < 0]
+        if not down:
+            return float('inf')
         denom = math.sqrt(sum(x * x for x in down) / max(1, len(down)))
         return math.sqrt(252) * sum(r) / max(1, len(r)) / denom if denom else 0.0
 
@@ -47,7 +49,7 @@ class BacktestResult:
 
     @property
     def total_return(self):
-        return self.equity[-1] - 1
+        return self.equity[-1] / self.equity[0] - 1 if len(self.equity) >= 2 else 0.0
 
     def metrics(self):
         return {
@@ -72,7 +74,7 @@ def run_backtest(
     signal = genome.evaluate(
         Context({k: feed.column(k) for k in ("close", "high", "low", "volume")})
     )
-    raw = [0 if math.isnan(v) else (1 if v > threshold else -1) for v in signal]
+    raw = [0 if math.isnan(v) else (1 if v > threshold else (0 if abs(v - threshold) < 1e-12 else -1)) for v in signal]
     delay = max(1, execution.delay_bars)
     positions = [0] * len(raw)
     returns = [0.0]
@@ -84,7 +86,7 @@ def run_backtest(
         changed = turnover > 0
         trades += int(changed)
         gross = positions[i - 1] * (close[i] / close[i - 1] - 1)
-        cost = execution.cost_rate(turnover, positions[i])
+        cost = execution.cost_rate(turnover) + execution.carry_rate(positions[i])
         costs += cost
         returns.append(gross - cost)
     equity = [1.0]
@@ -169,7 +171,7 @@ def run_cross_sectional_backtest(
             if turnover > 1e-6:
                 total_trades += 1
             pos_dir = 1 if target_weights[s] > 0 else (-1 if target_weights[s] < 0 else 0)
-            cost = execution.cost_rate(turnover, pos_dir)
+            cost = execution.cost_rate(turnover) + execution.carry_rate(pos_dir)
             bar_cost += cost
             p_prev = closes[s][i - 1]
             p_curr = closes[s][i]

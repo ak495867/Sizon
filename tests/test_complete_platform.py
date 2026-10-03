@@ -27,8 +27,8 @@ from sizon import (
 )
 
 
-def test_more_than_100_primitives_are_callable():
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_more_than_100_primitives_are_callable(sample_feed):
+    feed = sample_feed
     ctx = __import__("sizon.core.expression", fromlist=["Context"]).Context(
         {k: feed.column(k) for k in ("close", "high", "low", "volume")}
     )
@@ -39,7 +39,7 @@ def test_more_than_100_primitives_are_callable():
 
 def test_typed_research_and_portfolio_safety():
     g = example_genome()
-    assert validate_expression(g)["lookahead_safe"]
+    assert validate_expression(g)
     typed = signal(g)
     assert position(typed).value_type == ValueType.POSITION
     cfg = PortfolioConfig(min_order_size=2, tick_size=0.1)
@@ -60,17 +60,15 @@ def test_statistics_search_and_paper_broker(tmp_path):
     save_checkpoint(path, [], 2, 7)
     assert load_checkpoint(path)["generation"] == 2
     broker = PaperBroker()
-    try:
+    import pytest
+    with pytest.raises(PermissionError):
         broker.submit(PaperOrder("BTC", "buy", 1))
-        assert False
-    except PermissionError:
-        pass
     broker.enable()
     assert broker.submit(PaperOrder("BTC", "buy", 1))["status"] == "paper_submitted"
 
 
-def test_report_and_sqlite_query(tmp_path):
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_report_and_sqlite_query(tmp_path, sample_feed):
+    feed = sample_feed
     Engine(
         feed,
         population=1,

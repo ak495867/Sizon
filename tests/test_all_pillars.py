@@ -50,8 +50,8 @@ def test_quantile_spread_and_decay():
     assert decay[0] == 1.0
 
 
-def test_factor_analytics_full_pipeline():
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_factor_analytics_full_pipeline(sample_feed):
+    feed = sample_feed
     genome = example_genome()
     report = FactorAnalytics.analyze(feed, genome, horizons=(1, 3), quantiles=3)
     assert "horizons" in report
@@ -89,8 +89,8 @@ def test_market_neutralization_and_orthogonalization():
     assert nov_diff > 0.0
 
 
-def test_alpha_ensemble_portfolio():
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_alpha_ensemble_portfolio(sample_feed):
+    feed = sample_feed
     g1 = Primitive("RSI", 14)
     g2 = Primitive("SMA", 5)
     g3 = Binary("-", Primitive("EMA", 3), Primitive("SMA", 10))

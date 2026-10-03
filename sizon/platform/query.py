@@ -8,15 +8,18 @@ import sqlite3
 class ExperimentQuery:
     def __init__(self, path="runs/sizon.sqlite"):
         self.path = str(path)
-        self.db = sqlite3.connect(self.path)
+        self.db = sqlite3.connect(self.path, check_same_thread=False)
         self.db.execute(
-            "create table if not exists strategies (strategy_id text, generation int, expression text, train_sharpe real, test_sharpe real, max_drawdown real, payload text)"
+            "create table if not exists strategies "
+            "(strategy_id text, generation int, expression text, "
+            "train_sharpe real, test_sharpe real, max_drawdown real, payload text, "
+            "unique(strategy_id, generation))"
         )
         self.db.commit()
 
     def ingest(self, record):
         self.db.execute(
-            "insert into strategies values (?,?,?,?,?,?,?)",
+            "insert or replace into strategies values (?,?,?,?,?,?,?)",
             (
                 record["strategy_id"],
                 record["generation"],

@@ -10,11 +10,42 @@ def export_json(record, path):
     return Path(path)
 
 
-def export_yaml(record, path):
-    lines = []
-    for k, v in record.items():
-        lines.append(f"{k}: {json.dumps(v,default=str)}")
-    Path(path).write_text("\n".join(lines) + "\n")
+def _to_yaml(value, indent: int = 0) -> str:
+    """Minimal YAML serializer for simple dict/list/scalar structures."""
+    prefix = '  ' * indent
+    if isinstance(value, dict):
+        if not value:
+            return '{}'
+        lines = []
+        for k, v in value.items():
+            v_yaml = _to_yaml(v, indent + 1)
+            if isinstance(v, (dict, list)) and v:
+                lines.append(f'{prefix}{k}:')
+                lines.append(v_yaml)
+            else:
+                lines.append(f'{prefix}{k}: {v_yaml}')
+        return '\n'.join(lines)
+    elif isinstance(value, list):
+        if not value:
+            return '[]'
+        return '\n'.join(f'{prefix}- {_to_yaml(item, indent)}' for item in value)
+    elif isinstance(value, bool):
+        return 'true' if value else 'false'
+    elif isinstance(value, (int, float)):
+        return str(value)
+    elif value is None:
+        return 'null'
+    else:
+        s = str(value)
+        # Quote strings that contain YAML special chars
+        if any(c in s for c in (':','#','[',']','{','}','&','*','!','|','>',"'",'"','%','@','`')):
+            return json.dumps(s)  # Use JSON string quoting
+        return s
+
+def export_yaml(record: dict, path) -> Path:
+    """Export strategy record as valid YAML."""
+    content = _to_yaml(record) + '\n'
+    Path(path).write_text(content, encoding='utf-8')
     return Path(path)
 
 

@@ -22,3 +22,14 @@ sizon = "sizon.cli.main:main"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+testpaths = ["tests"]
+addopts = "-ra -q --tb=short"
+markers = [
+    "unit: fast isolated unit tests",
+    "integration: multi-component evolutionary tests",
+    "slow: heavy evolutionary simulations",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]

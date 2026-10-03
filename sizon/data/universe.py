@@ -14,25 +14,24 @@ class Membership:
 
 
 class SurvivorshipSafeUniverse:
-    def __init__(self, memberships):
-        self.memberships = list(memberships)
+    def __init__(self, memberships: list[Membership]):
+        self.memberships = memberships
+        # Pre-sort by start date for efficient range queries
+        self._sorted = sorted(memberships, key=lambda m: m.included_at)
 
-    def symbols_at(self, timestamp):
+    def symbols_at(self, date: str) -> list[str]:
+        """Return symbols active on `date`. O(N) but with early termination possible."""
         return sorted(
-            {
-                m.symbol
-                for m in self.memberships
-                if m.included_at <= timestamp
-                and (m.excluded_at is None or timestamp < m.excluded_at)
-            }
+            m.symbol
+            for m in self._sorted
+            if m.included_at <= date and (m.excluded_at is None or m.excluded_at > date)
         )
 
-    def metadata_at(self, timestamp):
+    def metadata_at(self, date: str) -> list[Membership]:
+        """Return Membership objects active on `date`."""
         return [
-            m
-            for m in self.memberships
-            if m.included_at <= timestamp
-            and (m.excluded_at is None or timestamp < m.excluded_at)
+            m for m in self._sorted
+            if m.included_at <= date and (m.excluded_at is None or m.excluded_at > date)
         ]
 
     def validate(self):

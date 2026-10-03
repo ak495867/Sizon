@@ -33,22 +33,20 @@ def fronts(candidates):
     return result
 
 
-def crowding(front):
+def crowding(front: list) -> dict[int, float]:
+    """Return crowding distance keyed by candidate's position index in front."""
     if not front:
         return {}
-    distance = {id(c): 0.0 for c in front}
-    for key, reverse in (
-        ("sharpe", True),
-        ("max_drawdown", False),
-        ("complexity", False),
-    ):
-        ordered = sorted(front, key=lambda c: c.scores[key], reverse=reverse)
-        distance[id(ordered[0])] = distance[id(ordered[-1])] = float("inf")
-        span = abs(ordered[0].scores[key] - ordered[-1].scores[key]) or 1
-        for i in range(1, len(ordered) - 1):
-            distance[id(ordered[i])] += (
-                abs(ordered[i - 1].scores[key] - ordered[i + 1].scores[key]) / span
-            )
+    distance: dict[int, float] = {i: 0.0 for i in range(len(front))}
+    for key, reverse in (("sharpe", True), ("max_drawdown", False), ("complexity", False)):
+        order = sorted(range(len(front)), key=lambda i: front[i].scores[key], reverse=reverse)
+        distance[order[0]] = distance[order[-1]] = float("inf")
+        span = abs(front[order[0]].scores[key] - front[order[-1]].scores[key]) or 1.0
+        for rank in range(1, len(order) - 1):
+            i = order[rank]
+            prev_i = order[rank - 1]
+            next_i = order[rank + 1]
+            distance[i] += abs(front[prev_i].scores[key] - front[next_i].scores[key]) / span
     return distance
 
 
@@ -59,11 +57,11 @@ class NSGA2:
             if len(chosen) + len(front) <= size:
                 chosen.extend(front)
             else:
-                chosen.extend(
-                    sorted(front, key=lambda c: crowding(front)[id(c)], reverse=True)[
-                        : size - len(chosen)
-                    ]
-                )
+                cd = crowding(front)
+                # sort by crowding distance (higher = more spread out = better)
+                remaining_needed = size - len(chosen)
+                sorted_front = sorted(range(len(front)), key=lambda i: cd.get(i, 0.0), reverse=True)
+                chosen.extend(front[i] for i in sorted_front[:remaining_needed])
                 break
         return chosen
 

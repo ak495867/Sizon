@@ -13,15 +13,15 @@ from sizon import (
 )
 
 
-def test_feed_and_quality_report():
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_feed_and_quality_report(sample_feed):
+    feed = sample_feed
     report = feed.quality_report()
     assert feed.validate()["rows"] == 20
     assert report.ok
 
 
-def test_expression_round_trip_and_execution_costs():
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_expression_round_trip_and_execution_costs(sample_feed):
+    feed = sample_feed
     genome = example_genome()
     assert genome_to_dict(genome) == genome_to_dict(
         genome_from_dict(genome_to_dict(genome))
@@ -35,8 +35,8 @@ def test_expression_round_trip_and_execution_costs():
     assert expensive.costs_paid >= cheap.costs_paid
 
 
-def test_walk_forward_and_purged_cv_have_boundaries():
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_walk_forward_and_purged_cv_have_boundaries(sample_feed):
+    feed = sample_feed
     genome = example_genome()
     wf = walk_forward(feed, genome, n_splits=2, test_size=0.2)
     cv = purged_cross_validation(feed, genome, n_splits=3, purge_bars=4, embargo_bars=2)
@@ -45,16 +45,16 @@ def test_walk_forward_and_purged_cv_have_boundaries():
     assert all(f["test_start"] >= 0 for f in cv["fold_details"])
 
 
-def test_robustness_suite_has_all_sensitivity_families():
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_robustness_suite_has_all_sensitivity_families(sample_feed):
+    feed = sample_feed
     report = robustness_suite(feed, example_genome(), simulations=10, seed=3)
     assert set(report) == {"cost_sensitivity", "parameter_sensitivity", "monte_carlo"}
     assert len(report["cost_sensitivity"]["scenarios"]) == 5
     assert len(report["parameter_sensitivity"]["scenarios"]) == 7
 
 
-def test_engine_persists_every_candidate_and_all_research_tests(tmp_path):
-    feed = DataFeed.from_csv("examples/sample.csv")
+def test_engine_persists_every_candidate_and_all_research_tests(tmp_path, sample_feed):
+    feed = sample_feed
     Engine(
         feed,
         population=2,
@@ -76,12 +76,10 @@ def test_engine_persists_every_candidate_and_all_research_tests(tmp_path):
 
 
 def test_bad_ohlc_is_rejected(tmp_path):
+    import pytest
     path = tmp_path / "bad.csv"
     path.write_text(
         "timestamp,symbol,open,high,low,close,volume\n2026-01-01,X,10,8,9,10,1\n"
     )
-    try:
+    with pytest.raises(ValueError, match="OHLC"):
         DataFeed.from_csv(path)
-        assert False
-    except ValueError as exc:
-        assert "OHLC" in str(exc)
