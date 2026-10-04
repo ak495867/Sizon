@@ -40,10 +40,7 @@ class InstitutionalGauntlet:
         self.is_feed = sz.DataFeed.from_csv(data_path)
         self.oos_feed = sz.DataFeed.from_csv(oos_data_path)
         
-        # Parquet Caching for Speed (No Data Leak)
-        self.is_feed.to_parquet("cache_is.parquet")
-        self.oos_feed.to_parquet("cache_oos.parquet")
-        
+        # Parquet Caching is typically done before feed loading, skipping direct feed export
         self.base_execution = DEFAULT_EXECUTION
 
     def _plot_and_save(self, strat_id: str, results: dict):
