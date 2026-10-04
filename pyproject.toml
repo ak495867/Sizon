@@ -14,7 +14,7 @@ dependencies = []
 
 [project.optional-dependencies]
 parquet = ["pyarrow>=14"]
-scientific = ["numpy>=1.24", "scipy", "scikit-learn", "lightgbm", "pandas"]
+scientific = ["numpy>=1.24", "scipy", "scikit-learn", "lightgbm", "pandas", "matplotlib", "numba"]
 test = ["pytest>=7"]
 
 [project.scripts]

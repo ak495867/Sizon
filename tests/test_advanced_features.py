@@ -154,3 +154,16 @@ def test_alpha_ensemble_hrp(sample_feed):
     assert hasattr(result, "weights")
     # Weights should sum to ~1
     assert abs(sum(result.weights.values()) - 1.0) < 1e-5
+
+def test_jited_functions_math():
+    from sizon.core.expression import _ema, _kama
+    from sizon.research._math_utils import _mean, _std, _correlation
+    
+    data = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
+    data2 = [2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0]
+    
+    assert abs(_mean(data) - 5.5) < 1e-6
+    assert abs(_correlation(data, data2) - 1.0) < 1e-6
+    
+    ema = _ema(data, 3)
+    assert len(ema) == len(data)

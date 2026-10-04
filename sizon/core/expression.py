@@ -43,6 +43,9 @@ class Constant(Node):
         return 1
 
 
+import numba
+
+@numba.jit(forceobj=True)
 def _rolling(x, p, fn, fill=math.nan):
     out = [fill] * len(x)
     for i in range(p - 1, len(x)):
@@ -50,6 +53,7 @@ def _rolling(x, p, fn, fill=math.nan):
     return out
 
 
+@numba.njit
 def _ema(x, p):
     out = []
     a = 2 / (p + 1)
@@ -60,6 +64,7 @@ def _ema(x, p):
     return out
 
 
+@numba.njit
 def _kama(x, p, fast=2, slow=30):
     if len(x) < p:
         return [math.nan] * len(x)
@@ -70,7 +75,7 @@ def _kama(x, p, fast=2, slow=30):
     out[p - 1] = kama
     for i in range(p, len(x)):
         change = abs(x[i] - x[i - p])
-        vol = sum(abs(x[j] - x[j - 1]) for j in range(i - p + 1, i + 1))
+        vol = sum([abs(x[j] - x[j - 1]) for j in range(i - p + 1, i + 1)])
         er = change / vol if vol > 0 else 0.0
         sc = (er * (fast_sc - slow_sc) + slow_sc) ** 2
         kama = kama + sc * (x[i] - kama)
@@ -78,35 +83,38 @@ def _kama(x, p, fast=2, slow=30):
     return out
 
 
+@numba.njit
 def _zlema(x, p):
     lag = max(1, (p - 1) // 2)
     adjusted = [(2 * x[i] - x[i - lag]) if i >= lag else x[i] for i in range(len(x))]
     return _ema(adjusted, p)
 
 
+@numba.njit
 def _skew(chunk):
     n = len(chunk)
     if n < 3:
         return 0.0
     mean = sum(chunk) / n
-    var = sum((v - mean) ** 2 for v in chunk) / n
+    var = sum([(v - mean) ** 2 for v in chunk]) / n
     std = math.sqrt(var)
     if std == 0:
         return 0.0
-    m3 = sum((v - mean) ** 3 for v in chunk) / n
+    m3 = sum([(v - mean) ** 3 for v in chunk]) / n
     return m3 / (std**3)
 
 
+@numba.njit
 def _kurtosis(chunk):
     n = len(chunk)
     if n < 4:
         return 0.0
     mean = sum(chunk) / n
-    var = sum((v - mean) ** 2 for v in chunk) / n
+    var = sum([(v - mean) ** 2 for v in chunk]) / n
     std = math.sqrt(var)
     if std == 0:
         return 0.0
-    m4 = sum((v - mean) ** 4 for v in chunk) / n
+    m4 = sum([(v - mean) ** 4 for v in chunk]) / n
     return (m4 / (std**4)) - 3.0
 
 

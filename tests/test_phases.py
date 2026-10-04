@@ -80,3 +80,30 @@ def test_cpcv_splits():
     
     assert splits[2][1] == [4, 5]
     assert splits[2][0] == [0, 1, 2, 3]
+
+
+def test_synthetic_orderbook_generation():
+    from sizon.simulation.synthetic_book import SyntheticBookGenerator
+    generator = SyntheticBookGenerator(levels=5, decay_rate=0.5)
+    book = generator.generate(high=102.0, low=98.0, close=100.0, volume=1000.0)
+    
+    assert len(book.bids) == 5
+    assert len(book.asks) == 5
+    
+    # Check bids < asks
+    for bid in book.bids:
+        for ask in book.asks:
+            assert bid.price < ask.price
+            
+    # Check bids are below close, asks are above close
+    assert all(b.price < 100.0 for b in book.bids)
+    assert all(a.price > 100.0 for a in book.asks)
+    
+    # Check volume decay (first level has most volume, which is closest to mid)
+    assert book.bids[0].quantity > book.bids[-1].quantity
+    assert book.asks[0].quantity > book.asks[-1].quantity
+    
+    # Bids should be decreasing in price as we go further away
+    assert book.bids[0].price > book.bids[-1].price
+    # Asks should be increasing in price as we go further away
+    assert book.asks[0].price < book.asks[-1].price

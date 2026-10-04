@@ -85,3 +85,22 @@ def test_report_and_sqlite_query(tmp_path, sample_feed):
     q.ingest(record)
     assert q.top(1)
     q.close()
+
+
+def test_central_clearing_degrades_identical_strategies(sample_feed):
+    from sizon.simulation.clearing import CentralClearingBook
+    from sizon.simulation.execution import ExecutionModel
+    from sizon import example_genome
+
+    exec_model = ExecutionModel(impact_bps_per_turnover=50.0, commission_bps=1.0, spread_bps=1.0, slippage_bps=1.0)
+    
+    g = example_genome()
+    book = CentralClearingBook()
+    
+    res1 = book.simulate_concurrent(sample_feed, [g], exec_model)
+    single_strat_return = res1["strat_0"].total_return
+    
+    res3 = book.simulate_concurrent(sample_feed, [g, g, g], exec_model)
+    multi_strat_return = res3["strat_0"].total_return
+    
+    assert multi_strat_return < single_strat_return, "Aggregate impact should degrade returns for identical strategies"
